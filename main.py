@@ -9,7 +9,7 @@ from os import getenv  # TOKEN
 # --------------------------------
 from aiogram import Bot, Dispatcher, Router, types
 from aiogram.enums import ParseMode
-from aiogram.filters import CommandStart, Command
+from aiogram.filters import CommandStart, Command, CommandObject
 from aiogram.types import Message
 from aiogram.utils.markdown import hbold, hide_link, hlink
 from instaloader import Instaloader, Profile
@@ -23,7 +23,7 @@ col_ref = db.collection('users_info')
 
 # Initial Instaloader Commands
 L = Instaloader()
-L.login("roshid1y", "roshid%00")
+L.login("white_walter00", "white%0000")
 
 TOKEN = "6677086320:AAEEWgYtrahfQZ21RbyI8RFQeRUGE6C2Vck"
 
@@ -60,8 +60,8 @@ async def command_start_handler(message: types.Message) -> None:
 
 
 @dp.message(Command("fetch"))
-async def you(message: Message) -> None:
-    username = message.text.split(" ")[1]
+async def you(message: Message, command: CommandObject) -> None:
+    username = command.args
 
     print(message.from_user.full_name)
 
