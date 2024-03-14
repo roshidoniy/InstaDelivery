@@ -15,7 +15,7 @@ from aiogram.utils.markdown import hbold, hide_link, hlink
 from instaloader import Instaloader, Profile
 from firebase_admin import credentials, firestore
 
-## Initial Firebase Commands
+# Initial Firebase Commands
 cred = credentials.Certificate("./instadeliver0SDK.json")
 default_app = firebase_admin.initialize_app(cred)
 db = firestore.client()
@@ -25,7 +25,7 @@ col_ref = db.collection('users_info')
 L = Instaloader()
 L.login("white_walter00", "white%0000")
 
-TOKEN = "6677086320:AAEEWgYtrahfQZ21RbyI8RFQeRUGE6C2Vck"
+TOKEN = "6701068330:AAEInwHJitGP-GUcKhKqhueJMtXs8bI7oLE"
 
 # All handlers should be attached to the Router (or Dispatcher)
 dp = Dispatcher()
