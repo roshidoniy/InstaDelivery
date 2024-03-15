@@ -11,7 +11,7 @@ from aiogram import Bot, Dispatcher, Router, types
 from aiogram.enums import ParseMode
 from aiogram.filters import CommandStart, Command, CommandObject
 from aiogram.types import Message
-from aiogram.utils.markdown import hbold, hide_link, hlink
+from aiogram.utils.markdown import hbold, hide_link
 from instaloader import Instaloader, Profile
 from firebase_admin import credentials, firestore
 
@@ -93,6 +93,15 @@ async def follow(message: Message) -> None:
         'follows': [followTo] + followsArray
     })
 
+@dp.message(Command("unfollow"))
+async def unfollow(message: Message) -> None:
+    #unfollow feature
+    await message.reply_to_message("Soon")
+
+@dp.message(Command(commands=["getStories", "getstories"]))
+async def getStories(message: Message) -> None:
+    #unfollow feature
+    await message.reply_photo("https://techcrunch.com/wp-content/uploads/2023/03/alexander-shatov-71Qk8ODIBko-unsplash.jpg?w=1390&crop=1", "Soon", )
 
 async def main() -> None:
     # Initialize Bot instance with a default parse mode which will be passed to all API calls
