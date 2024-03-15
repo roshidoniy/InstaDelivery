@@ -72,9 +72,13 @@ async def you(message: Message, command: CommandObject) -> None:
     profile = Profile.from_username(L.context, username)
     posts = profile.get_posts()
 
+    # recognizes if it is a video or photo and it return 3 last posts
     counter = 0
     for post in posts:
-        await message.answer(f"{hide_link(post.video_url)} {profile.full_name}")
+        if post.is_video:
+            await message.answer(f"{hide_link(post.video_url)} {post.date_local}")
+        else:
+            await message.answer(f"{hide_link(post.url)} {post.date_local}")
         counter += 1
         if counter == 3:
             break
