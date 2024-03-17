@@ -6,6 +6,7 @@ from email import message_from_bytes
 import firebase_admin
 import datetime
 from os import getenv  # TOKEN
+from keyboard import unfollow_buttons
 # --------------------------------
 from aiogram import Bot, Dispatcher, Router, types
 from aiogram.enums import ParseMode
@@ -100,7 +101,11 @@ async def follow(message: Message) -> None:
 @dp.message(Command("unfollow"))
 async def unfollow(message: Message) -> None:
     #unfollow feature
-    await message.reply_to_message("Soon")
+    currentlyFollowing = col_ref.document(f"{message.from_user.id}").get().to_dict()['follows']
+
+
+
+    await message.answer("Soon", reply_markup=unfollow_buttons(currentlyFollowing))
 
 @dp.message(Command(commands=["getStories", "getstories"]))
 async def getStories(message: Message) -> None:
