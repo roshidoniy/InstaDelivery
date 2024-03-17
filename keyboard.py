@@ -7,7 +7,7 @@ from aiogram.types import (
 
 def unfollow_buttons(follows):
 
-    keyboard_buttons = [KeyboardButton(text=str(response)) for response in follows]
+    keyboard_buttons = [KeyboardButton(text=f"@{str(response)} ✨") for response in follows]
 
     return ReplyKeyboardMarkup(
     keyboard=[

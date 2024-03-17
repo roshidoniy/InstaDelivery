@@ -38,9 +38,11 @@ async def command_start_handler(message: types.Message) -> None:
     This handler receives messages with `/start` command
 
     """
+
+    user = message.from_user
+
     currentTime = datetime.datetime.now().strftime("%H:%M")
 
-    doc_ref = col_ref.document(f"{message.from_user.id}")
 
     data = {
         'id': message.from_user.id,
@@ -49,8 +51,16 @@ async def command_start_handler(message: types.Message) -> None:
         'follows': []
     }
 
-    doc_ref.set(data)
 
+    doc_ref = col_ref.document(f"{user.id}")
+
+    if doc_ref.get().exists:
+        await message.answer(f"Welcome back {user.first_name}")
+    else:
+        doc_ref.set(data)
+        await message.answer(f"Your virtual Instagram Account was successfully created \n So, Enjoy 😉")
+
+    
     # If /start command runs, the follows array will be removed. Fix this
 
     await message.answer(
@@ -61,7 +71,7 @@ async def command_start_handler(message: types.Message) -> None:
 
 
 @dp.message(Command("fetch"))
-async def you(message: Message, command: CommandObject) -> None:
+async def fetch(message: Message, command: CommandObject) -> None:
     username = command.args
 
     print(message.from_user.full_name)
@@ -104,8 +114,7 @@ async def unfollow(message: Message) -> None:
     currentlyFollowing = col_ref.document(f"{message.from_user.id}").get().to_dict()['follows']
 
 
-
-    await message.answer("Soon", reply_markup=unfollow_buttons(currentlyFollowing))
+    await message.answer(text="Choose the account to unfollow", reply_markup=unfollow_buttons(currentlyFollowing))
 
 @dp.message(Command(commands=["getStories", "getstories"]))
 async def getStories(message: Message) -> None:
