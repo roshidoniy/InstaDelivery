@@ -53,7 +53,7 @@ async def command_start_handler(message: types.Message) -> None:
     # If /start command runs, the follows array will be removed. Fix this
 
     await message.answer(
-        f"Hello, Welcome to Insta Deliver!\nRun \"/fetch + {hbold("username")}\" to fetch last 3 posts from this "
+        f"Hello, Welcome to Insta Deliver!\nRun \"/fetch + {hbold('username')}\" to fetch last 3 posts from this "
         f"username")
 
     # message.reply(f"Welcome to InstaFetcher. click /fetch to get posts from {USER}")
@@ -110,6 +110,10 @@ async def getStories(message: Message) -> None:
 async def main() -> None:
     # Initialize Bot instance with a default parse mode which will be passed to all API calls
     bot = Bot(TOKEN, parse_mode=ParseMode.HTML)
+
+    # This is how you can send ads to users 👇🏻
+    ## await bot.send_message(5076971567, "there is an ad, I am the CEO, bitch")
+    
     # And the run events dispatching
     await dp.start_polling(bot, skip_updates=True)
 
