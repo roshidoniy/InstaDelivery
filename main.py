@@ -18,13 +18,17 @@ from firebase_admin import credentials, firestore
 
 # Initial Firebase Commands
 cred = credentials.Certificate("./instadeliver0SDK.json")
-default_app = firebase_admin.initialize_app(cred)
+firebase_admin.initialize_app(cred)
+
 db = firestore.client()
 col_ref = db.collection('users_info')
 
 # Initial Instaloader Commands
+
 L = Instaloader()
 L.login("white_walter00", "white%0000")
+print("logged in")
+
 
 TOKEN = "6701068330:AAEInwHJitGP-GUcKhKqhueJMtXs8bI7oLE"
 
@@ -42,7 +46,6 @@ async def command_start_handler(message: types.Message) -> None:
     user = message.from_user
 
     currentTime = datetime.datetime.now().strftime("%H:%M")
-
 
     data = {
         'id': message.from_user.id,
@@ -96,17 +99,23 @@ async def fetch(message: Message, command: CommandObject) -> None:
 
 
 @dp.message(Command("follow"))
-async def follow(message: Message) -> None:
+async def follow(message: Message, command: CommandObject) -> None:
     # catch the item after /follow command
-    followTo = message.text.split(" ")[1]
+    followTo = command.args
+    userID = message.from_user.id
 
-    doc_ref = col_ref.document(f"{message.from_user.id}")
+    doc_ref = col_ref.document(f"{userID}")
     followsArray = doc_ref.get().to_dict()['follows']
-
-    # adds new follow to follows property in the document
-    doc_ref.update({
+    
+    if len(followsArray) > 3:
+        await message.answer(text="You are currently following 3 accounts, which is a limit")
+    else:
+        # adds new follow to follows property in the document
+        doc_ref.update({
         'follows': [followTo] + followsArray
-    })
+        })
+
+    
 
 @dp.message(Command("unfollow"))
 async def unfollow(message: Message) -> None:
@@ -126,7 +135,7 @@ async def main() -> None:
     bot = Bot(TOKEN, parse_mode=ParseMode.HTML)
 
     # This is how you can send ads to users 👇🏻
-    ## await bot.send_message(5076971567, "there is an ad, I am the CEO, bitch")
+    ## await bot.send_message(5076971567, "there is an ad")
     
     # And the run events dispatching
     await dp.start_polling(bot, skip_updates=True)

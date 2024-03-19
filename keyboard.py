@@ -17,5 +17,4 @@ def unfollow_buttons(follows):
     one_time_keyboard=True,
     input_field_placeholder="Choose the account to unfollow",
     selective=True,
-
     )
