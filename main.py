@@ -3,23 +3,17 @@ import logging
 import sys
 import time
 
-import firebase_admin
-import datetime
 from keyboard import unfollow_buttons
-# --------------------------------
+
+#Components
+from firebase_helpers import isUserExist, addFollowing, setupAccount, followingList
+
 from aiogram import Bot, Dispatcher, types
 from aiogram.enums import ParseMode
 from aiogram.filters import CommandStart, Command, CommandObject
 from aiogram.types import Message, LinkPreviewOptions
+from aiogram.utils.markdown import italic
 from instaloader import (Instaloader, Profile) 
-from firebase_admin import credentials, firestore
-
-# Initial Firebase Commands
-cred = credentials.Certificate("./instadeliver0SDK.json")
-firebase_admin.initialize_app(cred)
-
-db = firestore.client()
-col_ref = db.collection('users_info')
 
 # Initial Instaloader Commands
 
@@ -34,32 +28,14 @@ TOKEN = "6701068330:AAEInwHJitGP-GUcKhKqhueJMtXs8bI7oLE"
 dp = Dispatcher()
 
 
-@dp.message(CommandStart())
+@dp.message(CommandStart()) # /start Command
 async def command_start_handler(message: types.Message) -> None:
-    """
-    This handler receives messages with `/start` command
-
-    """
-
     user = message.from_user
 
-    currentTime = datetime.datetime.now().strftime("%H:%M")
-
-    data = {
-        'id': message.from_user.id,
-        'fullname': message.from_user.full_name,
-        'fetchTime': currentTime,
-        'follows': [],
-        'last_post_time': None,
-    }
-
-
-    doc_ref = col_ref.document(f"{user.id}")
-
-    if doc_ref.get().exists:
+    if isUserExist(user.id):
         await message.answer(f"Welcome back {user.first_name} *This is bold*", parse_mode=ParseMode.MARKDOWN_V2)
     else:
-        doc_ref.set(data)
+        setupAccount(user.id, user.full_name)
         await message.answer(f"Your virtual Instagram Account was successfully created \n So, Enjoy 😉")
 
     
@@ -92,16 +68,16 @@ async def fetch(message: Message, command: CommandObject) -> None:
             # Sometimes I should just send the url
 
             fresh_video_url = post.video_url
-            await message.answer(f"{post.likes}👍🏻", link_preview_options=LinkPreviewOptions(
+            await message.answer(f"{italic(post.caption)}", link_preview_options=LinkPreviewOptions(
                 url=fresh_video_url,
                 show_above_text=True,
-            ))
+            ), parse_mode=ParseMode.MARKDOWN_V2)
             print(fresh_video_url)
         else:
-            await message.answer(f"{post.likes}👍🏻", link_preview_options=LinkPreviewOptions(
+            await message.answer(f"{italic(post.caption)}", link_preview_options=LinkPreviewOptions(
                 url=post.url,
                 show_above_text=True,
-            ))
+            ), parse_mode=ParseMode.MARKDOWN)
         counter += 1
         if counter == 3:
             break
@@ -117,26 +93,19 @@ async def follow(message: Message, command: CommandObject) -> None:
     followTo = command.args
     userID = message.from_user.id
 
-    doc_ref = col_ref.document(f"{userID}")
-    followsArray = list(doc_ref.get().to_dict()['follows'])
+    addStatus = addFollowing(userID, followTo)
 
-    
-    
-    if len(followsArray) > 3:
-        await message.answer(text="You are currently following 3 accounts, which is a limit")
-    else:
-        # adds new follow to follows property in the document
-        doc_ref.update({
-        'follows': [followTo] + followsArray
-        })
+    if not addStatus:
+        await message.answer("You can follow 3 accounts at most")
+    else :
+        await message.answer(f"You followed `@{followTo}`", parse_mode=ParseMode.MARKDOWN_V2)
 
-    
+        
 
 @dp.message(Command("unfollow"))
 async def unfollow(message: Message) -> None:
     #unfollow feature
-    currentlyFollowing = col_ref.document(f"{message.from_user.id}").get().to_dict()['follows']
-
+    currentlyFollowing = followingList(message.from_user.id)
 
     await message.answer(text="Choose the account to unfollow", reply_markup=unfollow_buttons(currentlyFollowing))
 
