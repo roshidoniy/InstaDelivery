@@ -8,7 +8,9 @@ from keyboard import unfollow_buttons
 #Components
 from firebase_helpers import isUserExist, addFollowing, setupAccount, followingList
 
-from aiogram import Bot, Dispatcher, types
+from aiogram import Bot, Dispatcher, types, Router
+from aiogram.fsm.context import FSMContext
+from aiogram.fsm.state import State, StatesGroup
 from aiogram.enums import ParseMode
 from aiogram.filters import CommandStart, Command, CommandObject
 from aiogram.types import Message, LinkPreviewOptions
@@ -25,11 +27,16 @@ print("logged in")
 
 TOKEN = "6701068330:AAEInwHJitGP-GUcKhKqhueJMtXs8bI7oLE"
 
-# All handlers should be attached to the Router (or Dispatcher)
-dp = Dispatcher()
+# All handlers should be attached to the Router
+main_router = Router()
 
 
-@dp.message(CommandStart()) # /start Command
+# State
+class BotState(StatesGroup):
+    unfollowAcc = State()
+
+
+@main_router.message(CommandStart()) # /start Command
 async def command_start_handler(message: types.Message) -> None:
     user = message.from_user
 
@@ -47,7 +54,7 @@ async def command_start_handler(message: types.Message) -> None:
     # message.reply(f"Welcome to InstaFetcher. click /fetch to get posts from {USER}")
 
 
-@dp.message(Command("fetch"))
+@main_router.message(Command("fetch"))
 async def fetch(message: Message, command: CommandObject) -> None:
     username = command.args
 
@@ -84,11 +91,11 @@ async def fetch(message: Message, command: CommandObject) -> None:
     #     await message.answer(f"Error fetching posts from {username}. Please try again later.")
     #     break --> implement try first *above*
 
-@dp.error() # -> error was handled. Using that, I can just send the video url
-async def error_handler(event: ErrorEvent):
-    print("Critical error caused by %s")
+# @dp.error() # -> error was handled. Using that, I can just send the video url
+# async def error_handler(event: ErrorEvent):
+#     print("Critical error caused by %s")
 
-@dp.message(Command("follow"))
+@main_router.message(Command("follow"))
 async def follow(message: Message, command: CommandObject) -> None:
     # catch the item after /follow command
     followTo = command.args
@@ -103,14 +110,21 @@ async def follow(message: Message, command: CommandObject) -> None:
 
         
 
-@dp.message(Command("unfollow"))
-async def unfollow(message: Message) -> None:
+@main_router.message(Command("unfollow"))
+async def unfollow(message: Message, state: FSMContext) -> None:
     #unfollow feature
     currentlyFollowing = followingList(message.from_user.id)
 
     await message.answer(text="Choose the account to unfollow", reply_markup=unfollow_buttons(currentlyFollowing))
+    await state.set_state(BotState.unfollowAcc)
 
-@dp.message(Command(commands=["getStories", "getstories"]))
+@main_router.message(BotState.unfollowAcc)
+async def goDelete(message: Message, state: FSMContext) -> None:
+    print(message.text)
+    await state.clear()
+
+
+@main_router.message(Command(commands=["getStories", "getstories"]))
 async def getStories(message: Message) -> None:
     #unfollow feature
     await message.reply_photo("https://techcrunch.com/wp-content/uploads/2023/03/alexander-shatov-71Qk8ODIBko-unsplash.jpg?w=1390&crop=1", "Soon", )
@@ -118,6 +132,9 @@ async def getStories(message: Message) -> None:
 async def main() -> None:
     # Initialize Bot instance with a default parse mode which will be passed to all API calls
     bot = Bot(TOKEN)
+    dp = Dispatcher()
+
+    dp.include_router(main_router)
     
     # And the run events dispatching
     await dp.start_polling(bot)
