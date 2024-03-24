@@ -10,6 +10,11 @@ col_ref = db.collection('users_info')
 def followingList(userID): 
     return col_ref.document(f"{userID}").get().to_dict()['follows']
 
+def unFollow(userID, toRemove):
+    doc_ref = col_ref.document(f"{userID}")
+    doc_ref.update({
+        'follows': firestore.firestore.ArrayRemove([toRemove])
+    })
 
 def addFollowing(userID, followTo):
     doc_ref = col_ref.document(f"{userID}")

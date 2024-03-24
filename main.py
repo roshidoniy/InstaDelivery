@@ -13,6 +13,7 @@ from aiogram.enums import ParseMode
 from aiogram.filters import CommandStart, Command, CommandObject
 from aiogram.types import Message, LinkPreviewOptions
 from aiogram.utils.markdown import italic
+from aiogram.types.error_event import ErrorEvent
 from instaloader import (Instaloader, Profile) 
 
 # Initial Instaloader Commands
@@ -67,17 +68,14 @@ async def fetch(message: Message, command: CommandObject) -> None:
             # there is an error, The preview or video is not loading because of changing of url.
             # Sometimes I should just send the url
 
-            fresh_video_url = post.video_url
-            await message.answer(f"{italic(post.caption)}", link_preview_options=LinkPreviewOptions(
-                url=fresh_video_url,
-                show_above_text=True,
-            ), parse_mode=ParseMode.MARKDOWN_V2)
-            print(fresh_video_url)
+            try:
+                await message.answer_video(video=post.video_url, caption=f"_{post.caption}_", )
+            except Exception as e:
+                await message.answer(post.video_url)
+                print(e)
+            
         else:
-            await message.answer(f"{italic(post.caption)}", link_preview_options=LinkPreviewOptions(
-                url=post.url,
-                show_above_text=True,
-            ), parse_mode=ParseMode.MARKDOWN)
+            await message.answer_photo(photo=post.url, caption=f"{italic(post.caption)}")
         counter += 1
         if counter == 3:
             break
@@ -86,6 +84,9 @@ async def fetch(message: Message, command: CommandObject) -> None:
     #     await message.answer(f"Error fetching posts from {username}. Please try again later.")
     #     break --> implement try first *above*
 
+@dp.error() # -> error was handled. Using that, I can just send the video url
+async def error_handler(event: ErrorEvent):
+    print("Critical error caused by %s")
 
 @dp.message(Command("follow"))
 async def follow(message: Message, command: CommandObject) -> None:
