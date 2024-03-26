@@ -6,15 +6,15 @@ import time
 from keyboard import unfollow_buttons
 
 #Components
-from firebase_helpers import isUserExist, addFollowing, setupAccount, followingList
+from firebase_helpers import isUserExist, addFollowing, setupAccount, followingList, unFollow
 
 from aiogram import Bot, Dispatcher, types, Router
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.enums import ParseMode
 from aiogram.filters import CommandStart, Command, CommandObject
-from aiogram.types import Message
-from aiogram.utils.markdown import italic
+from aiogram.types import Message, ReplyKeyboardRemove
+from aiogram.utils.markdown import italic, hbold
 from aiogram.types.error_event import ErrorEvent
 from instaloader import (Instaloader, Profile) 
 
@@ -57,8 +57,6 @@ async def command_start_handler(message: types.Message) -> None:
 @main_router.message(Command("fetch"))
 async def fetch(message: Message, command: CommandObject) -> None:
     username = command.args
-
-    print(message.from_user.full_name)
 
     if username:
         await message.answer("Fetching posts, please wait...")
@@ -115,12 +113,17 @@ async def unfollow(message: Message, state: FSMContext) -> None:
     #unfollow feature
     currentlyFollowing = followingList(message.from_user.id)
 
-    await message.answer(text="Choose the account to unfollow", reply_markup=unfollow_buttons(currentlyFollowing))
-    await state.set_state(BotState.unfollowAcc)
+    if currentlyFollowing:
+        await message.answer(text="Choose the account to unfollow", reply_markup=unfollow_buttons(currentlyFollowing))
+        await state.set_state(BotState.unfollowAcc)
+    else:
+        await message.answer(f"Currently, You don't have any followed accounts {hbold("Please follow accounts first using /follow + AccountName")}", parse_mode=ParseMode.HTML)
+    
 
 @main_router.message(BotState.unfollowAcc)
 async def goDelete(message: Message, state: FSMContext) -> None:
-    print(message.text)
+    unFollow(message.from_user.id, message.text)
+    message.answer(text="Successfully removed from your followed list", reply_markup=ReplyKeyboardRemove())
     await state.clear()
 
 
