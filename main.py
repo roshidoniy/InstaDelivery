@@ -13,7 +13,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.enums import ParseMode
 from aiogram.filters import CommandStart, Command, CommandObject
-from aiogram.types import Message, LinkPreviewOptions
+from aiogram.types import Message
 from aiogram.utils.markdown import italic
 from aiogram.types.error_event import ErrorEvent
 from instaloader import (Instaloader, Profile) 
@@ -76,13 +76,13 @@ async def fetch(message: Message, command: CommandObject) -> None:
             # Sometimes I should just send the url
 
             try:
-                await message.answer_video(video=post.video_url, caption=f"_{post.caption}_", )
+                await message.answer_video(video=post.video_url, caption=f"{italic(post.caption)}", parse_mode=ParseMode.MARKDOWN_V2)
             except Exception as e:
                 await message.answer(post.video_url)
                 print(e)
             
         else:
-            await message.answer_photo(photo=post.url, caption=f"{italic(post.caption)}")
+            await message.answer_photo(photo=post.url, caption=f"{italic(post.caption)}", parse_mode=ParseMode.MARKDOWN_V2)
         counter += 1
         if counter == 3:
             break
