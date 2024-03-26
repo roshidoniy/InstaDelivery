@@ -3,17 +3,18 @@ import logging
 import sys
 import time
 
-from keyboard import unfollow_buttons
+from keyboard import (unfollow_buttons)
+
 
 #Components
 from firebase_helpers import isUserExist, addFollowing, setupAccount, followingList, unFollow
 
-from aiogram import Bot, Dispatcher, types, Router
+from aiogram import Bot, Dispatcher, types, Router, F
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.enums import ParseMode
 from aiogram.filters import CommandStart, Command, CommandObject
-from aiogram.types import Message, ReplyKeyboardRemove
+from aiogram.types import Message, ReplyKeyboardRemove, CallbackQuery
 from aiogram.utils.markdown import italic, hbold
 from aiogram.types.error_event import ErrorEvent
 from instaloader import (Instaloader, Profile) 
@@ -114,7 +115,7 @@ async def unfollow(message: Message, state: FSMContext) -> None:
     currentlyFollowing = followingList(message.from_user.id)
 
     if currentlyFollowing:
-        await message.answer(text="Choose the account to unfollow", reply_markup=unfollow_buttons(currentlyFollowing))
+        await message.answer(text="Choose the account to unfollow 👇", reply_markup=unfollow_buttons(currentlyFollowing))
         await state.set_state(BotState.unfollowAcc)
     else:
         await message.answer(f"Currently, You don't have any followed accounts {hbold("Please follow accounts first using /follow + AccountName")}", parse_mode=ParseMode.HTML)
@@ -125,6 +126,14 @@ async def goDelete(message: Message, state: FSMContext) -> None:
     unFollow(message.from_user.id, message.text)
     message.answer(text="Successfully removed from your followed list", reply_markup=ReplyKeyboardRemove())
     await state.clear()
+
+## Inline Following Delete Handle
+# @main_router.callback_query(F.data.startswith("d_"))
+# async def goDelete(query: CallbackQuery):
+#     unfollowingAccount = query.data[2:]
+#     unFollow(query.from_user.id, unfollowingAccount)
+#     print(unfollowingAccount)
+#     await query.answer(f"You unfollowed @{unfollowingAccount}")
 
 
 @main_router.message(Command(commands=["getStories", "getstories"]))
@@ -138,7 +147,6 @@ async def main() -> None:
     dp = Dispatcher()
 
     dp.include_router(main_router)
-    
     # And the run events dispatching
     await dp.start_polling(bot)
 
