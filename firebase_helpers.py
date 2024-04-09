@@ -20,16 +20,12 @@ def addFollowing(userID, followTo):
     doc_ref = col_ref.document(f"{userID}")
     followsArray = list(doc_ref.get().to_dict()['follows'])
     
-    if len(followingList(userID)) == 3:
-        print("Nope")
-        return False
-    else:
-        # adds new follow to follows property in the document
-        doc_ref.update({
-        'follows': [followTo] + followsArray
-        })
+    # adds new follow to follows property in the document
+    doc_ref.update({
+    'follows': [followTo] + followsArray
+    })
 
-        return True
+
 
 def isUserExist(telegramID) -> bool:
     doc_ref = col_ref.document(f"{telegramID}")
@@ -38,15 +34,33 @@ def isUserExist(telegramID) -> bool:
 
 def setupAccount(userID, fullName):
 
-    currentTime = datetime.now().strftime("%H:%M")
+    currentTime = datetime.now()
+    fetchHour = datetime.now().strftime("%H")
+    fetchMinute = datetime.now().strftime("%M")
+    fetchSecond = datetime.now().strftime("%S")
+    print(currentTime)
     
     data = {
         'id': userID,
         'fullname': fullName,
-        'fetchTime': currentTime,
+        'fetchHour': fetchHour,
+        'fetchTime': {
+            'hour': int(fetchHour),
+            'minute': int(fetchMinute),
+            'second': int(fetchSecond)
+        },
         'follows': [],
-        'last_post_time': currentTime,
+        'last_post_time': str(currentTime),
     }
     
     doc_ref = col_ref.document(f"{userID}")
     doc_ref.set(data)
+
+def getTime(telegramID):
+    doc_ref = col_ref.document(f"{telegramID}")
+    
+    return doc_ref.get().to_dict()['last_post_time']
+    # fetchHour = doc_ref.get().to_dict()['fetchHour']
+    # fetchMinute = doc_ref.get().to_dict()['fetchMinute']
+
+    # return [fetchHour, fetchMinute]
