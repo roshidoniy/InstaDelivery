@@ -1,9 +1,4 @@
-from aiogram.types import (
-    ReplyKeyboardMarkup,
-    KeyboardButton,
-    InlineKeyboardButton
-
-)
+from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
 
 def unfollow_buttons(follows):
 
@@ -19,9 +14,8 @@ def unfollow_buttons(follows):
     selective=True,
     )
 
-## Inline Delete Buttons Function
-# def unfollowInline(follows):
-#     return InlineKeyboardMarkup(inline_keyboard=[
-#         [InlineKeyboardButton(text=f"{(response)}", callback_data=f"d_{response}") for response in follows]
-#     ]
-#     )
+def failedURL(link):
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="CLick this", url=link)]
+    ]
+    )
