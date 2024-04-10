@@ -142,36 +142,40 @@ async def check(message: Message) -> None:
     print(getTime(message.from_user.id))
     await message.answer(f"{ifTrue}")
 
-@main_router.message(Command(commands=["stories", "Stories", "story", "Story"])) # Not Ready ⚠
+@main_router.message(Command(commands=["stories", "Stories", "story", "Story"]))
 async def getStories(message: Message, command: CommandObject) -> None: 
     stories = []
-    await message.delete()
-    await message.answer('🔎')
+    myMessage = await message.answer('🔎')
+    loading = await message.answer('Loading...')
     media_group = MediaGroupBuilder()
     username = command.args
     profile = Profile.from_username(L.context, username)
     isThereAny = profile.has_public_story
-
-    numberStories = L.get_stories(userids=[profile.userid])
     
-
-    # print(list(numberStories))
-    # stories_count = len(list(numberStories)) # it shows the number of stories
-    # await message.answer(f"{stories_count}")  
-
-    story = L.get_stories(userids=[profile.userid])
-    for item in story:
-        for i in item.get_items():
-            # if i.is_video:
-            #     stories.append()
-            #     media_group.add_video(media=f"{i.video_url}")
-            # else:
-            #     media_group.add_photo(media=f"{i.url}")
-            stories.append(i)
-
-    # await message.answer_media_group(media_group.build())
-    for item in stories:
-        await message.answer(item.url)
+    if isThereAny:
+        story = L.get_stories(userids=[profile.userid])
+        for item in story:
+            for i in item.get_items():
+                stories.insert(0, i)
+        
+            if len(stories) < 10:
+                for item in stories: 
+                    if item.is_video:
+                        media_group.add_video(media=f"{item.video_url}")
+                    else:
+                        media_group.add_photo(media=f"{item.url}")
+                await message.answer_media_group(media_group.build())
+            else:
+                for item in stories:  
+                    if item.is_video:
+                        await message.answer_video(video=f"{item.video_url}")
+                    else:
+                        await message.answer_photo(photo=f"{item.url}")
+        
+    else:
+        await message.answer(f"No stories found for {username}")
+    await myMessage.delete()
+    await loading.delete()
 # async def example() -> None:
 #     print("hello")
 
