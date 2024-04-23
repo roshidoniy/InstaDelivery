@@ -7,8 +7,9 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 
 #Components
-from firebase_helpers import isUserExist, addFollowing, setupAccount, followingList, unFollow, getTime
+from firebase_helpers import isUserExist, addFollowing, setupAccount, followingList, unFollow, getTime, setting
 from keyboard import (unfollow_buttons, failedURL)
+from functions import groupSend
 
 from aiogram import Bot, Dispatcher, types, Router, F
 from aiogram.fsm.context import FSMContext
@@ -16,15 +17,16 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.enums import ParseMode
 from aiogram.filters import CommandStart, Command, CommandObject
 from aiogram.types import Message, ReplyKeyboardRemove, CallbackQuery
-from aiogram.utils.markdown import italic, hbold, hide_link
+from aiogram.utils.markdown import italic, hbold, hide_link, blockquote
 from aiogram.utils.media_group import MediaGroupBuilder
 from aiogram.types.error_event import ErrorEvent
 from instaloader import (Instaloader, Profile) 
+from aiogram.exceptions import TelegramBadRequest
 
 # Initial Instaloader Commands
 
 L = Instaloader()
-L.login("Iamautisticbear911", "mahmudjon0505")
+# L.login("Iamautisticbear911", "mahmudjon0505")
 
 print("logged in")
 
@@ -38,6 +40,7 @@ main_router = Router()
 class BotState(StatesGroup):
     unfollowAcc = State()
     followAcc = State()
+    setTime = State()
         
 
 
@@ -61,6 +64,17 @@ async def command_start_handler(message: types.Message) -> None:
     # scheduler.start()
     # message.reply(f"Welcome to InstaFetcher. click /fetch to get posts from {USER}")
 
+@main_router.message(Command("setTime"))
+async def setTime(message: Message, state: FSMContext) -> None:
+    await message.answer("Set the time to fetch posts")
+    await state.set_state(BotState.setTime)
+
+
+@main_router.message(BotState.setTime)
+async def goSet(message: Message, state: FSMContext) -> None:
+    setting(message.text, message.from_user.id)
+    await state.clear()
+
 
 @main_router.message(Command("fetch"))
 async def fetch(message: Message, command: CommandObject) -> None:
@@ -72,23 +86,25 @@ async def fetch(message: Message, command: CommandObject) -> None:
     profile = Profile.from_username(L.context, username)
     posts = profile.get_posts()
 
-    # recognizes if it is a video or photo and it return 3 last posts
     counter = 0
+
+    # Thinking about 
     for post in posts:
-        if post.is_video:
+        if post.typename == "GraphSidecar":
+            await groupSend(message, post.get_sidecar_nodes())
+            await message.answer(f"👆🏻👆🏻👆🏻 \n {post.caption}")
+        elif post.is_video:
             # there is an error, The preview or video is not loading because of changing of url.
             # Sometimes I should just send the url
-
             try:
                 await message.answer_video(video=post.video_url, caption=f"{italic(post.caption)}", parse_mode=ParseMode.MARKDOWN_V2)
             except Exception as e:
                 await message.answer(f"{italic(post.caption)}", reply_markup=failedURL(post.video_url))
-                print(e)
             
         else:
             await message.answer_photo(photo=post.url, caption=f"{italic(post.caption)}", parse_mode=ParseMode.MARKDOWN_V2)
         counter += 1
-        if counter == 3:
+        if counter == 6:
             break
         time.sleep(2)  # Small delay to help with rate limiting
     # except instaloader.exceptions.QueryReturnedBadRequestException:
@@ -145,33 +161,29 @@ async def check(message: Message) -> None:
 @main_router.message(Command(commands=["stories", "Stories", "story", "Story"]))
 async def getStories(message: Message, command: CommandObject) -> None: 
     stories = []
-    myMessage = await message.answer('🔎')
+    myMessage = await message.reply_sticker(sticker="CAACAgIAAxkBAAEL6bhmG_FMa3paannjWWswUZnt-yX_tAACIwADKA9qFCdRJeeMIKQGNAQ")
     loading = await message.answer('Loading...')
-    media_group = MediaGroupBuilder()
     username = command.args
     profile = Profile.from_username(L.context, username)
     isThereAny = profile.has_public_story
-    
+
     if isThereAny:
         story = L.get_stories(userids=[profile.userid])
         for item in story:
             for i in item.get_items():
                 stories.insert(0, i)
-        
-            if len(stories) < 10:
-                for item in stories: 
+            
+            for index, item in enumerate(stories):  
+                try:
                     if item.is_video:
-                        media_group.add_video(media=f"{item.video_url}")
+                        await message.answer_video(video=f"{item.video_url}", caption=f"{index+1}-story")
                     else:
-                        media_group.add_photo(media=f"{item.url}")
-                await message.answer_media_group(media_group.build())
-            else:
-                for item in stories:  
+                        await message.answer_photo(photo=f"{item.url}", caption=f"{index+1}-story")
+                except TelegramBadRequest:
                     if item.is_video:
-                        await message.answer_video(video=f"{item.video_url}")
+                        await message.answer(f"OOPS", reply_markup=failedURL(item.video_url))
                     else:
-                        await message.answer_photo(photo=f"{item.url}")
-        
+                        await message.answer(f"OOPS", reply_markup=failedURL(item.url))
     else:
         await message.answer(f"No stories found for {username}")
     await myMessage.delete()

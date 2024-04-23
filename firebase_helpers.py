@@ -64,3 +64,17 @@ def getTime(telegramID):
     # fetchMinute = doc_ref.get().to_dict()['fetchMinute']
 
     # return [fetchHour, fetchMinute]
+
+def setting(time, telegramID):
+    doc_ref = col_ref.document(f"{telegramID}")
+
+    newTime = time.split(":", 2)
+
+    print(newTime)
+
+    doc_ref.update({
+        'fetchTime': {
+            'hour': newTime[0],
+            'minute': newTime[1]
+        }
+    })
