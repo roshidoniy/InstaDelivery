@@ -79,37 +79,32 @@ async def goSet(message: Message, state: FSMContext) -> None:
 @main_router.message(Command("fetch"))
 async def fetch(message: Message, command: CommandObject) -> None:
     username = command.args # /fetch {username}
-
+    counter = 0
     if username:
         await message.answer("Fetching posts, please wait...")
-
-    profile = Profile.from_username(L.context, username)
-    posts = profile.get_posts()
-
-    counter = 0
-
-    # Thinking about 
-    for post in posts:
-        if post.typename == "GraphSidecar":
-            await groupSend(message, post.get_sidecar_nodes())
-            await message.answer(f"👆🏻👆🏻👆🏻 \n {post.caption}")
-        elif post.is_video:
-            # there is an error, The preview or video is not loading because of changing of url.
-            # Sometimes I should just send the url
-            try:
-                await message.answer_video(video=post.video_url, caption=f"{italic(post.caption)}", parse_mode=ParseMode.MARKDOWN_V2)
-            except Exception as e:
-                await message.answer(f"{italic(post.caption)}", reply_markup=failedURL(post.video_url))
-            
-        else:
-            await message.answer_photo(photo=post.url, caption=f"{italic(post.caption)}", parse_mode=ParseMode.MARKDOWN_V2)
-        counter += 1
-        if counter == 6:
-            break
-        time.sleep(2)  # Small delay to help with rate limiting
-    # except instaloader.exceptions.QueryReturnedBadRequestException:
-    #     await message.answer(f"Error fetching posts from {username}. Please try again later.")
-    #     break --> implement try first *above*
+        profile = Profile.from_username(L.context, username)
+        posts = profile.get_posts()
+        # Thinking about 
+        for post in posts:
+            if post.typename == "GraphSidecar":
+                await groupSend(message, post.get_sidecar_nodes())
+                await message.answer(f"👆🏻👆🏻👆🏻 \n {post.caption}")
+            elif post.is_video:
+                # there is an error, The preview or video is not loading because of changing of url.
+                # Sometimes I should just send the url
+                try:
+                    await message.answer_video(video=post.video_url, caption=f"{italic(post.caption)}", parse_mode=ParseMode.MARKDOWN_V2)
+                except Exception as e:
+                    await message.answer(f"{italic(post.caption)}", reply_markup=failedURL(post.video_url))
+                
+            else:
+                await message.answer_photo(photo=post.url, caption=f"{italic(post.caption)}", parse_mode=ParseMode.MARKDOWN_V2)
+            counter += 1
+            if counter == 6:
+                break
+            time.sleep(2) # Small delay to help with rate limiting
+    else:
+        await message.answer(f"/fetch + username || to fetch posts from this username")
 
 @main_router.message(Command("follow"))
 async def follow(message: Message, state: State) -> None:
