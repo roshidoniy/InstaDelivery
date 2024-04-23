@@ -33,11 +33,9 @@ def isUserExist(telegramID) -> bool:
     return doc_ref.get().exists
 
 def setupAccount(userID, fullName):
-
     currentTime = datetime.now()
     fetchHour = datetime.now().strftime("%H")
     fetchMinute = datetime.now().strftime("%M")
-    fetchSecond = datetime.now().strftime("%S")
     print(currentTime)
     
     data = {
@@ -46,8 +44,7 @@ def setupAccount(userID, fullName):
         'fetchHour': fetchHour,
         'fetchTime': {
             'hour': int(fetchHour),
-            'minute': int(fetchMinute),
-            'second': int(fetchSecond)
+            'minute': int(fetchMinute)
         },
         'follows': [],
         'last_post_time': str(currentTime),
