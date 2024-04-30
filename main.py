@@ -2,34 +2,27 @@ import asyncio
 import logging
 import sys
 import time
-from datetime import datetime
-from apscheduler.schedulers.asyncio import AsyncIOScheduler 
+from datetime import datetime, timedelta
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
-
-#Components
-from firebase_helpers import isUserExist, addFollowing, setupAccount, followingList, unFollow, getTime, setting
-from keyboard import (unfollow_buttons, failedURL)
-from functions import groupSend
-
-from aiogram import Bot, Dispatcher, types, Router, F
+from aiogram import Bot, Dispatcher, types, Router
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.enums import ParseMode
 from aiogram.filters import CommandStart, Command, CommandObject
-from aiogram.types import Message, ReplyKeyboardRemove, CallbackQuery
-from aiogram.utils.markdown import italic, hbold, hide_link, blockquote
-from aiogram.utils.media_group import MediaGroupBuilder
-from aiogram.types.error_event import ErrorEvent
-from instaloader import (Instaloader, Profile) 
+from aiogram.types import Message, ReplyKeyboardRemove
+from aiogram.utils.markdown import hbold
+from instaloader import Instaloader, Profile, Post
 from aiogram.exceptions import TelegramBadRequest
-
 # Initial Instaloader Commands
 
+
+#Components
+from firebase_helpers import isUserExist, addFollowing, setupAccount, followingList, unFollow, setting, randomAccount
+from keyboard import (unfollow_buttons, failedURL)
+from functions import groupSend
+
 L = Instaloader()
-# L.login("Iamautisticbear911", "mahmudjon0505")
-
-print("logged in")
-
 
 TOKEN = "6701068330:AAEInwHJitGP-GUcKhKqhueJMtXs8bI7oLE"
 
@@ -41,11 +34,14 @@ class BotState(StatesGroup):
     unfollowAcc = State()
     followAcc = State()
     setTime = State()
-        
 
+scheduler = AsyncIOScheduler()
 
-@main_router.message(CommandStart()) # /start Command
+@main_router.message(CommandStart())
 async def command_start_handler(message: types.Message) -> None:
+    global scheduler
+
+    
     user = message.from_user
 
     if isUserExist(user.id):
@@ -54,57 +50,86 @@ async def command_start_handler(message: types.Message) -> None:
         setupAccount(user.id, user.full_name)
         await message.answer(f"Your virtual Instagram Account was successfully created \n So, Enjoy 😉")
 
+    user_id = message.from_user.id
     
-    # If /start command runs, the follows array will be removed. Fix this
+    if not scheduler.get_job(str(user_id)):
+        scheduler.add_job(dailyUpdates, 'interval', minutes=1, args=[message], id=str(user_id))
+    
+    
+    await message.answer("Welcome to InstaDelivery. \n This bot can help you to avoid Instagram Hell. start right now - command /follow ", parse_mode=ParseMode.HTML)
 
-    await message.answer("Hello, Welcome to Insta Deliver!\nRun <blockquote>/fetch + 'username'</blockquote> to fetch last 3 posts from this username", parse_mode=ParseMode.HTML)
-
-    # scheduler = AsyncIOScheduler()
-    # scheduler.add_job(example, 'interval', seconds=3)
-    # scheduler.start()
-    # message.reply(f"Welcome to InstaFetcher. click /fetch to get posts from {USER}")
-
-@main_router.message(Command("setTime"))
-async def setTime(message: Message, state: FSMContext) -> None:
-    await message.answer("Set the time to fetch posts")
-    await state.set_state(BotState.setTime)
+# @main_router.message(Command("setTime"))
+# async def setTime(message: Message, state: FSMContext) -> None:
+#     await message.answer("Set the time to fetch posts")
+#     await state.set_state(BotState.setTime)
 
 
-@main_router.message(BotState.setTime)
-async def goSet(message: Message, state: FSMContext) -> None:
-    setting(message.text, message.from_user.id)
-    await state.clear()
+# @main_router.message(BotState.setTime)
+# async def goSet(message: Message, state: FSMContext) -> None:
+    # setting(message.text, message.from_user.id)
+    # await state.clear()
 
 
 @main_router.message(Command("fetch"))
-async def fetch(message: Message, command: CommandObject) -> None:
-    username = command.args # /fetch {username}
+async def fetch(message: Message, command: CommandObject) -> None: 
+    username = command.args
     counter = 0
     if username:
         await message.answer("Fetching posts, please wait...")
         profile = Profile.from_username(L.context, username)
         posts = profile.get_posts()
+        # get reels
         # Thinking about 
         for post in posts:
             if post.typename == "GraphSidecar":
                 await groupSend(message, post.get_sidecar_nodes())
                 await message.answer(f"👆🏻👆🏻👆🏻 \n {post.caption}")
             elif post.is_video:
-                # there is an error, The preview or video is not loading because of changing of url.
-                # Sometimes I should just send the url
                 try:
-                    await message.answer_video(video=post.video_url, caption=f"{italic(post.caption)}", parse_mode=ParseMode.MARKDOWN_V2)
-                except Exception as e:
-                    await message.answer(f"{italic(post.caption)}", reply_markup=failedURL(post.video_url))
+                    await message.answer_video(video=post.video_url, caption=f"{post.date}")
+                except:
+                    print(f"This error occured:")
+                    await message.answer(f"{post.date}", reply_markup=failedURL(post.video_url))
                 
             else:
-                await message.answer_photo(photo=post.url, caption=f"{italic(post.caption)}", parse_mode=ParseMode.MARKDOWN_V2)
+                try:
+                    await message.answer_photo(photo=post.url, caption=f"{post.caption}")
+                except:
+                    print(f"This error occured:")
+                    await message.answer(f"{post.caption}", reply_markup=failedURL(post.url))
             counter += 1
-            if counter == 6:
+            if counter == 3:
                 break
             time.sleep(2) # Small delay to help with rate limiting
     else:
         await message.answer(f"/fetch + username || to fetch posts from this username")
+
+async def dailyUpdates(message) -> None:
+    currentlyFollowing = followingList(message.from_user.id)
+    currentTime = datetime.now() - timedelta(days=1)
+    for username in currentlyFollowing:
+        profile = Profile.from_username(L.context, username)
+        posts = profile.get_posts()
+        for post in posts:
+            if post.date_utc > currentTime:
+                if post.typename == "GraphSidecar":
+                    await groupSend(message, post.get_sidecar_nodes())
+                    await message.answer(f"👆🏻👆🏻👆🏻 \n {post.caption}")
+                elif post.is_video:
+                    try:
+                        await message.answer_video(video=post.video_url, caption=f"{post.date}")
+                    except:
+                        print(f"This error occured:")
+                        await message.answer(f"{post.date}", reply_markup=failedURL(post.video_url))
+                else:
+                    try:
+                        await message.answer_photo(photo=post.url, caption=f"{post.caption}")
+                    except:
+                        print(f"This error occured:")
+                        await message.answer(f"{post.caption}", reply_markup=failedURL(post.url))
+            else:
+                await message.answer(f"No posts found for {username}")
+                break
 
 @main_router.message(Command("follow"))
 async def follow(message: Message, state: State) -> None:
@@ -128,7 +153,7 @@ async def goFollow(message: Message, state: FSMContext) -> None:
     await state.clear()
     
 
-@main_router.message(Command("unfollow")) ## | unfollow feature
+@main_router.message(Command("unfollow"))
 async def unfollow(message: Message, state: FSMContext) -> None:
     currentlyFollowing = followingList(message.from_user.id)
     
@@ -146,15 +171,11 @@ async def goDelete(message: Message, state: FSMContext) -> None:
     await state.clear()
 
 
-@main_router.message(Command("check")) # Check
-async def check(message: Message) -> None:
-    now = datetime.now()
-    ifTrue = datetime.fromisoformat(f"{now}") > datetime.fromisoformat(getTime(message.from_user.id))
-    print(getTime(message.from_user.id))
-    await message.answer(f"{ifTrue}")
-
 @main_router.message(Command(commands=["stories", "Stories", "story", "Story"]))
 async def getStories(message: Message, command: CommandObject) -> None: 
+    # random_account = randomAccount()
+    # L.login(random_account['username'], random_account['password'])
+    
     stories = []
     myMessage = await message.reply_sticker(sticker="CAACAgIAAxkBAAEL6bhmG_FMa3paannjWWswUZnt-yX_tAACIwADKA9qFCdRJeeMIKQGNAQ")
     loading = await message.answer('Loading...')
@@ -183,21 +204,45 @@ async def getStories(message: Message, command: CommandObject) -> None:
         await message.answer(f"No stories found for {username}")
     await myMessage.delete()
     await loading.delete()
-# async def example() -> None:
-#     print("hello")
+
+# @main_router.message()
+# async def download(message: Message) -> None:
+#     await message.answer("Downloading the video")
+
+#     L = Instaloader()
+
+#     url = message.text
+
+#     shortcode = url.split('/')[-2]
+
+#     try:
+#         post = Post.from_shortcode(L.context, shortcode)
+
+#         # Determine media URL based on post type (image or video)
+#         if post.is_video:
+#             media_url = post.video_url
+#             await message.answer_video(video=media_url, caption=f"{italic("@InstaLoader_bot | Instagram upon your terms")}", parse_mode=ParseMode.MARKDOWN_V2)
+#         else:
+#             media_url = post.url
+#             await message.answer_photo(photo=media_url, caption=f"@InstaLoader_bot | Instagram upon your terms")
+
+#     except Exception as e:
+#         print(f"Error downloading post: {e}")
+
 
 async def main() -> None:
+
     
     # Initialize Bot instance with a default parse mode which will be passed to all API calls
     bot = Bot(TOKEN)
     
     dp = Dispatcher()
-
+    scheduler.start()
     dp.include_router(main_router)
     # And the run events dispatching
     await dp.start_polling(bot)
 
-   
+
     while True:
         await asyncio.sleep(1000)
 
