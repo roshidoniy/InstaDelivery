@@ -12,10 +12,9 @@ from aiogram.enums import ParseMode
 from aiogram.filters import CommandStart, Command, CommandObject
 from aiogram.types import Message, ReplyKeyboardRemove
 from aiogram.utils.markdown import hbold
-from instaloader import Instaloader, Profile, Post
 from aiogram.exceptions import TelegramBadRequest
 # Initial Instaloader Commands
-
+from instaloader import Instaloader, Profile, Post
 
 #Components
 from firebase_helpers import isUserExist, addFollowing, setupAccount, followingList, unFollow, setting, randomAccount
