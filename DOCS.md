@@ -18,3 +18,29 @@ def unfollowInline(follows):
 # @dp.error() # -> error was handled. Using that, I can just send the video url
 # async def error_handler(event: ErrorEvent):
 #     print("Critical error caused by %s")
+
+------- Downlaod Posts --------
+
+# @main_router.message()
+# async def download(message: Message) -> None:
+#     await message.answer("Downloading the video")
+
+#     L = Instaloader()
+
+#     url = message.text
+
+#     shortcode = url.split('/')[-2]
+
+#     try:
+#         post = Post.from_shortcode(L.context, shortcode)
+
+#         # Determine media URL based on post type (image or video)
+#         if post.is_video:
+#             media_url = post.video_url
+#             await message.answer_video(video=media_url, caption=f"{italic("@InstaLoader_bot | Instagram upon your terms")}", parse_mode=ParseMode.MARKDOWN_V2)
+#         else:
+#             media_url = post.url
+#             await message.answer_photo(photo=media_url, caption=f"@InstaLoader_bot | Instagram upon your terms")
+
+#     except Exception as e:
+#         print(f"Error downloading post: {e}")

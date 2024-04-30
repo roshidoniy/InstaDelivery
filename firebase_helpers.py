@@ -1,5 +1,6 @@
 from datetime import datetime
 from firebase_admin import firestore, credentials, initialize_app
+import random
 
 cred = credentials.Certificate("./instadeliver0SDK.json")
 initialize_app(cred)
@@ -33,34 +34,20 @@ def isUserExist(telegramID) -> bool:
     return doc_ref.get().exists
 
 def setupAccount(userID, fullName):
-    currentTime = datetime.now()
-    fetchHour = datetime.now().strftime("%H")
-    fetchMinute = datetime.now().strftime("%M")
-    print(currentTime)
+    # currentTime = datetime.now()
+    # utc time 
+    # fetchTime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     
     data = {
         'id': userID,
         'fullname': fullName,
-        'fetchHour': fetchHour,
-        'fetchTime': {
-            'hour': int(fetchHour),
-            'minute': int(fetchMinute)
-        },
+        # 'fetchTime': fetchTime,
         'follows': [],
-        'last_post_time': str(currentTime),
+        # 'last_post_time': currentTime,
     }
     
     doc_ref = col_ref.document(f"{userID}")
     doc_ref.set(data)
-
-def getTime(telegramID):
-    doc_ref = col_ref.document(f"{telegramID}")
-    
-    return doc_ref.get().to_dict()['last_post_time']
-    # fetchHour = doc_ref.get().to_dict()['fetchHour']
-    # fetchMinute = doc_ref.get().to_dict()['fetchMinute']
-
-    # return [fetchHour, fetchMinute]
 
 def setting(time, telegramID):
     doc_ref = col_ref.document(f"{telegramID}")
@@ -75,3 +62,24 @@ def setting(time, telegramID):
             'minute': newTime[1]
         }
     })
+
+def randomAccount():
+    col_ref_accounts = db.collection('instaAccounts').list_documents()
+
+    doc_ids = [doc.id for doc in col_ref_accounts]
+
+    if not doc_ids:
+        return None
+
+    # Choose a random document ID
+    random_doc_id = random.choice(doc_ids)
+
+    # Retrieve the random document
+    random_doc_ref = db.collection("instaAccounts").document(random_doc_id)
+    random_doc = random_doc_ref.get()
+
+    if random_doc.exists:
+        return random_doc.to_dict()
+    else:
+        return None
+    # get random account from the collection
