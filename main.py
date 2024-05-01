@@ -14,12 +14,12 @@ from aiogram.types import Message, ReplyKeyboardRemove
 from aiogram.utils.markdown import hbold
 from aiogram.exceptions import TelegramBadRequest
 # Initial Instaloader Commands
-from instaloader import Instaloader, Profile, Post
+from instaloader import Instaloader, Profile
 
 #Components
 from firebase_helpers import isUserExist, addFollowing, setupAccount, followingList, unFollow, setting, randomAccount
 from keyboard import (unfollow_buttons, failedURL)
-from functions import groupSend
+from functions import groupSend, dailyUpdates
 
 L = Instaloader()
 
@@ -44,18 +44,18 @@ async def command_start_handler(message: types.Message) -> None:
     user = message.from_user
 
     if isUserExist(user.id):
-        await message.answer(f"Welcome back {user.first_name}")
+        await message.answer(f"Xush kelibsiz {user.first_name}")
     else:
         setupAccount(user.id, user.full_name)
-        await message.answer(f"Your virtual Instagram Account was successfully created \n So, Enjoy 😉")
+        await message.answer(f"Sizning Virtual Instagram akkountingiz yaratildi")
 
     user_id = message.from_user.id
     
     if not scheduler.get_job(str(user_id)):
-        scheduler.add_job(dailyUpdates, 'interval', minutes=1, args=[message], id=str(user_id))
+        scheduler.add_job(dailyUpdates, 'interval', minutes=1, args=[message, L], id=str(user_id))
     
     
-    await message.answer("Welcome to InstaDelivery. \n This bot can help you to avoid Instagram Hell. start right now - command /follow ", parse_mode=ParseMode.HTML)
+    # await message.answer("Welcome to InstaDelivery. \n This bot can help you to avoid Instagram Hell. start right now - command /follow ", parse_mode=ParseMode.HTML)
 
 # @main_router.message(Command("setTime"))
 # async def setTime(message: Message, state: FSMContext) -> None:
@@ -74,7 +74,7 @@ async def fetch(message: Message, command: CommandObject) -> None:
     username = command.args
     counter = 0
     if username:
-        await message.answer("Fetching posts, please wait...")
+        await message.answer("Iltimos Kuting, Postlar yuklanyapti...")
         profile = Profile.from_username(L.context, username)
         posts = profile.get_posts()
         # get reels
@@ -101,42 +101,17 @@ async def fetch(message: Message, command: CommandObject) -> None:
                 break
             time.sleep(2) # Small delay to help with rate limiting
     else:
-        await message.answer(f"/fetch + username || to fetch posts from this username")
+        await message.answer(f"/fetch XXXX || Instagram username'ini XXXX o'rnigaa qo'ying")
 
-async def dailyUpdates(message) -> None:
-    currentlyFollowing = followingList(message.from_user.id)
-    currentTime = datetime.now() - timedelta(days=1)
-    for username in currentlyFollowing:
-        profile = Profile.from_username(L.context, username)
-        posts = profile.get_posts()
-        for post in posts:
-            if post.date_utc > currentTime:
-                if post.typename == "GraphSidecar":
-                    await groupSend(message, post.get_sidecar_nodes())
-                    await message.answer(f"👆🏻👆🏻👆🏻 \n {post.caption}")
-                elif post.is_video:
-                    try:
-                        await message.answer_video(video=post.video_url, caption=f"{post.date}")
-                    except:
-                        print(f"This error occured:")
-                        await message.answer(f"{post.date}", reply_markup=failedURL(post.video_url))
-                else:
-                    try:
-                        await message.answer_photo(photo=post.url, caption=f"{post.caption}")
-                    except:
-                        print(f"This error occured:")
-                        await message.answer(f"{post.caption}", reply_markup=failedURL(post.url))
-            else:
-                await message.answer(f"No posts found for {username}")
-                break
+
 
 @main_router.message(Command("follow"))
 async def follow(message: Message, state: State) -> None:
     followingLength = len(followingList(message.from_user.id))
-    if followingLength == 3:
-        await message.answer("You can follow 3 accounts at most")
+    if followingLength == 5:
+        await message.answer("Hozircha siz 5ta akkountga a'zo bo'la olasiz")
     else:
-        await message.answer("Type the account you want to follow ↙️")
+        await message.answer("Obuna bo'lmoqchi bo'lgan username kiriting ↙️")
         await state.set_state(BotState.followAcc)
     
     
@@ -147,7 +122,7 @@ async def goFollow(message: Message, state: FSMContext) -> None:
         
     addFollowing(userID, followTo)
 
-    await message.answer(f"You followed `@{followTo}`", parse_mode=ParseMode.MARKDOWN_V2)
+    await message.answer(f"Siz obuna bo'ldingiz: `@{followTo}`", parse_mode=ParseMode.MARKDOWN_V2)
 
     await state.clear()
     
@@ -157,30 +132,32 @@ async def unfollow(message: Message, state: FSMContext) -> None:
     currentlyFollowing = followingList(message.from_user.id)
     
     if currentlyFollowing:
-        await message.answer(text="Choose the account to unfollow 👇", reply_markup=unfollow_buttons(currentlyFollowing))
+        await message.answer(text="Obunani olmoqchi bo'lgan akkauntni tanlang 👇", reply_markup=unfollow_buttons(currentlyFollowing))
         await state.set_state(BotState.unfollowAcc)
     else:
-        await message.answer(f"Currently, You don't have any followed accounts {hbold("Please follow accounts first using /follow + AccountName")}", parse_mode=ParseMode.HTML)
+        await message.answer(f"Hozirda, Sizda obuna bo'lgan akkauntlar yo'q {hbold("/follow + ACCOUNT_NAME ")}. Shu buyruqni berish orqali obuna bo'ling", parse_mode=ParseMode.HTML)
      
 
 @main_router.message(BotState.unfollowAcc)
 async def goDelete(message: Message, state: FSMContext) -> None:
     unFollow(message.from_user.id, message.text)
-    message.answer(text="Successfully removed from your followed list", reply_markup=ReplyKeyboardRemove())
+    await message.answer(text="Obunangizdan olib tashlandi", reply_markup=ReplyKeyboardRemove())
     await state.clear()
 
 
 @main_router.message(Command(commands=["stories", "Stories", "story", "Story"]))
 async def getStories(message: Message, command: CommandObject) -> None: 
-    # random_account = randomAccount()
-    # L.login(random_account['username'], random_account['password'])
+    random_account = randomAccount()
+    L.login(random_account['username'], random_account['password'])
     
     stories = []
     myMessage = await message.reply_sticker(sticker="CAACAgIAAxkBAAEL6bhmG_FMa3paannjWWswUZnt-yX_tAACIwADKA9qFCdRJeeMIKQGNAQ")
-    loading = await message.answer('Loading...')
+    loading = await message.answer('Yuklanyapti...')
     username = command.args
     profile = Profile.from_username(L.context, username)
     isThereAny = profile.has_public_story
+
+    error_message = "Bu postni telegram'ga yuborib bo'lmadi \n Lekin pastdagi tugmani bosib be'malol ko'rishingiz mumkin"
 
     if isThereAny:
         story = L.get_stories(userids=[profile.userid])
@@ -196,15 +173,15 @@ async def getStories(message: Message, command: CommandObject) -> None:
                         await message.answer_photo(photo=f"{item.url}", caption=f"{index+1}-story")
                 except TelegramBadRequest:
                     if item.is_video:
-                        await message.answer(f"OOPS", reply_markup=failedURL(item.video_url))
+                        await message.answer(error_message, reply_markup=failedURL(item.video_url))
                     else:
-                        await message.answer(f"OOPS", reply_markup=failedURL(item.url))
+                        await message.answer(error_message, reply_markup=failedURL(item.url))
     else:
-        await message.answer(f"No stories found for {username}")
+        await message.answer(f"Hozirda bu akkauntda story'lar yo'q: {username}")
     await myMessage.delete()
     await loading.delete()
 
-# @main_router.message()
+@main_router.message()
 # async def download(message: Message) -> None:
 #     await message.answer("Downloading the video")
 
