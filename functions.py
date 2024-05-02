@@ -22,6 +22,7 @@ async def dailyUpdates(message, L) -> None:
         profile = Profile.from_username(L.context, username)
         posts = profile.get_posts()
         for post in posts:
+
             if post.date_utc > currentTime:
                 if post.typename == "GraphSidecar":
                     await groupSend(message, post.get_sidecar_nodes())
@@ -39,5 +40,8 @@ async def dailyUpdates(message, L) -> None:
                         print(f"This error occured:")
                         await message.answer(f"{post.caption}", reply_markup=failedURL(post.url))
             else:
-                await message.answer(f"{username}'dan postlar topilmadi")
-                break
+                if post.is_pinned:
+                    continue
+                else:
+                    await message.answer(f"{username}'dan postlar topilmadi")
+                    break
