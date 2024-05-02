@@ -57,13 +57,14 @@ async def command_start_handler(message: types.Message) -> None:
 @main_router.message(Command("now"))
 async def now(message: Message) -> None:
     user_id = message.from_user.id
+
+    # If there is a job running, it removes. But Anyway, the new job will be added
     try:
         scheduler.remove_job(str(user_id))
     except:
         pass
     scheduler.add_job(dailyUpdates, 'interval', minutes=1, args=[message, L], id=str(user_id))
 
-    # await message.answer("Welcome to InstaDelivery. \n This bot can help you to avoid Instagram Hell. start right now - command /follow ", parse_mode=ParseMode.HTML)
 
 # @main_router.message(Command("setTime"))
 # async def setTime(message: Message, state: FSMContext) -> None:
@@ -155,6 +156,8 @@ async def goDelete(message: Message, state: FSMContext) -> None:
 
 @main_router.message(Command(commands=["stories", "Stories", "story", "Story"]))
 async def getStories(message: Message, command: CommandObject) -> None: 
+    myMessage = await message.reply_sticker(sticker="CAACAgIAAxkBAAEL6bhmG_FMa3paannjWWswUZnt-yX_tAACIwADKA9qFCdRJeeMIKQGNAQ")
+    
     random_account = randomAccount()
     L.login(random_account['username'], random_account['password'])
     
@@ -163,11 +166,9 @@ async def getStories(message: Message, command: CommandObject) -> None:
     username = command.args
     profile = Profile.from_username(L.context, username)
     isThereAny = profile.has_public_story
-
     error_message = "Bu postni telegram'ga yuborib bo'lmadi \n Lekin pastdagi tugmani bosib be'malol ko'rishingiz mumkin"
 
     if isThereAny:
-        myMessage = await message.reply_sticker(sticker="CAACAgIAAxkBAAEL6bhmG_FMa3paannjWWswUZnt-yX_tAACIwADKA9qFCdRJeeMIKQGNAQ")
         loading = await message.answer('Yuklanyapti...')
         story = L.get_stories(userids=[profile.userid])
         for item in story:
