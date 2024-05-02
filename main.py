@@ -31,7 +31,10 @@ main_router = Router()
 class BotState(StatesGroup):
     unfollowAcc = State()
     followAcc = State()
-    setTime = State()
+    story = State()
+    # setTime = State()
+
+
 
 scheduler = AsyncIOScheduler()
 
@@ -134,36 +137,17 @@ async def goFollow(message: Message, state: FSMContext) -> None:
     await message.answer(f"Siz obuna bo'ldingiz: `@{followTo}`", parse_mode=ParseMode.MARKDOWN_V2)
 
     await state.clear()
-    
 
-@main_router.message(Command("unfollow"))
-async def unfollow(message: Message, state: FSMContext) -> None:
-    currentlyFollowing = followingList(message.from_user.id)
-    
-    if currentlyFollowing:
-        await message.answer(text="Obunani olmoqchi bo'lgan akkauntni tanlang 👇", reply_markup=unfollow_buttons(currentlyFollowing))
-        await state.set_state(BotState.unfollowAcc)
-    else:
-        await message.answer(f"Hozirda, Sizda obuna bo'lgan akkauntlar yo'q {hbold("/follow + ACCOUNT_NAME ")}. Shu buyruqni berish orqali obuna bo'ling", parse_mode=ParseMode.HTML)
-     
-
-@main_router.message(BotState.unfollowAcc)
-async def goDelete(message: Message, state: FSMContext) -> None:
-    unFollow(message.from_user.id, message.text)
-    await message.answer(text="Obunangizdan olib tashlandi", reply_markup=ReplyKeyboardRemove())
-    await state.clear()
-
-
-@main_router.message(Command(commands=["stories", "Stories", "story", "Story"]))
-async def getStories(message: Message, command: CommandObject) -> None: 
+@main_router.message(BotState.story)
+async def goStory(message: Message, state: FSMContext) -> None:
     myMessage = await message.reply_sticker(sticker="CAACAgIAAxkBAAEL6bhmG_FMa3paannjWWswUZnt-yX_tAACIwADKA9qFCdRJeeMIKQGNAQ")
-    
+
     random_account = randomAccount()
     L.login(random_account['username'], random_account['password'])
-    
+
     stories = []
-    
-    username = command.args
+
+    username = message.text
     profile = Profile.from_username(L.context, username)
     isThereAny = profile.has_public_story
     error_message = "Bu postni telegram'ga yuborib bo'lmadi \n Lekin pastdagi tugmani bosib be'malol ko'rishingiz mumkin"
@@ -190,6 +174,66 @@ async def getStories(message: Message, command: CommandObject) -> None:
         await message.answer(f"Hozirda bu akkauntda story'lar yo'q: {username}")
     await myMessage.delete()
     await loading.delete()
+    await state.clear()
+
+@main_router.message(Command("unfollow"))
+async def unfollow(message: Message, state: FSMContext) -> None:
+    currentlyFollowing = followingList(message.from_user.id)
+    
+    if currentlyFollowing:
+        await message.answer(text="Obunani olmoqchi bo'lgan akkauntni tanlang 👇", reply_markup=unfollow_buttons(currentlyFollowing))
+        await state.set_state(BotState.unfollowAcc)
+    else:
+        await message.answer(f"Hozirda, Sizda obuna bo'lgan akkauntlar yo'q {hbold("/follow + ACCOUNT_NAME ")}. Shu buyruqni berish orqali obuna bo'ling", parse_mode=ParseMode.HTML)
+     
+
+@main_router.message(BotState.unfollowAcc)
+async def goDelete(message: Message, state: FSMContext) -> None:
+    unFollow(message.from_user.id, message.text)
+    await message.answer(text="Obunangizdan olib tashlandi", reply_markup=ReplyKeyboardRemove())
+    await state.clear()
+
+
+@main_router.message(Command(commands=["stories", "Stories", "story", "Story"]))
+async def getStories(message: Message, state: FSMContext) -> None: 
+    await state.set_state(BotState.story)
+    
+    # myMessage = await message.reply_sticker(sticker="CAACAgIAAxkBAAEL6bhmG_FMa3paannjWWswUZnt-yX_tAACIwADKA9qFCdRJeeMIKQGNAQ")
+    
+    # random_account = randomAccount()
+    # L.login(random_account['username'], random_account['password'])
+    
+    # stories = []
+    
+    # username = command.args
+    # profile = Profile.from_username(L.context, username)
+    # isThereAny = profile.has_public_story
+    # error_message = "Bu postni telegram'ga yuborib bo'lmadi \n Lekin pastdagi tugmani bosib be'malol ko'rishingiz mumkin"
+
+    # if isThereAny:
+    #     loading = await message.answer('Yuklanyapti...')
+    #     story = L.get_stories(userids=[profile.userid])
+    #     for item in story:
+    #         for i in item.get_items():
+    #             stories.insert(0, i)
+            
+    #         for index, item in enumerate(stories):  
+    #             try:
+    #                 if item.is_video:
+    #                     await message.answer_video(video=f"{item.video_url}", caption=f"{index+1}-story")
+    #                 else:
+    #                     await message.answer_photo(photo=f"{item.url}", caption=f"{index+1}-story")
+    #             except TelegramBadRequest:
+    #                 if item.is_video:
+    #                     await message.answer(error_message, reply_markup=failedURL(item.video_url))
+    #                 else:
+    #                     await message.answer(error_message, reply_markup=failedURL(item.url))
+    # else:
+    #     await message.answer(f"Hozirda bu akkauntda story'lar yo'q: {username}")
+    # await myMessage.delete()
+    # await loading.delete()
+
+
 
 @main_router.message()
 # async def download(message: Message) -> None:
@@ -217,7 +261,6 @@ async def getStories(message: Message, command: CommandObject) -> None:
 
 
 async def main() -> None:
-
     
     # Initialize Bot instance with a default parse mode which will be passed to all API calls
     bot = Bot(TOKEN)
