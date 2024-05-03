@@ -51,7 +51,7 @@ async def command_start_handler(message: types.Message) -> None:
     else:
         setupAccount(user.id, user.full_name)
         await message.answer(f"Virtual Instagram akkountingiz yaratildi")
-    await message.answer(f"/follow bosing. \nMen tanlagan akkauntingizdan kunlik yangi postlarni yuborib turaman")
+    await message.answer(f"/follow bosing. \nTanlagan akkauntingizdan kunlik yangi postlarni yuborib turaman")
     user_id = message.from_user.id
     
     if not scheduler.get_job(str(user_id)):
