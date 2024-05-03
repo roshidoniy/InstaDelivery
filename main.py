@@ -145,8 +145,8 @@ async def goStory(message: Message, state: FSMContext) -> None:
     myMessage = await message.reply_sticker(sticker="CAACAgIAAxkBAAEL6bhmG_FMa3paannjWWswUZnt-yX_tAACIwADKA9qFCdRJeeMIKQGNAQ")
     error_message = "Bu postni telegram'ga yuborib bo'lmadi \n Lekin pastdagi tugmani bosib be'malol ko'rishingiz mumkin"
 
-    # random_account = randomAccount()
-    # L.login(random_account['username'], random_account['password'])
+    random_account = randomAccount()
+    L.login(random_account['username'], random_account['password'])
 
     stories = []
 
