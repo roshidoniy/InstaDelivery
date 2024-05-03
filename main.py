@@ -85,7 +85,6 @@ async def now(message: Message) -> None:
 
 @main_router.message(Command("fetch"))
 async def fetch(message: Message, command: CommandObject) -> None: 
-    await message.answer(f"{datetime.now()}")
     username = command.args
     counter = 0
     if username:
@@ -103,7 +102,7 @@ async def fetch(message: Message, command: CommandObject) -> None:
                     await message.answer_video(video=post.video_url, caption=f"{post.caption}")
                 except:
                     print(f"This error occured:")
-                    await message.answer(f"{post.date}", reply_markup=failedURL(post.video_url))
+                    await message.answer(f"{post.caption}", reply_markup=failedURL(post.video_url))
             else:
                 try:
                     await message.answer_photo(photo=post.url, caption=f"{post.caption}")
