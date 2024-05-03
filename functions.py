@@ -22,14 +22,13 @@ async def dailyUpdates(message, L) -> None:
         profile = Profile.from_username(L.context, username)
         posts = profile.get_posts()
         for post in posts:
-
             if post.date_utc > currentTime:
                 if post.typename == "GraphSidecar":
                     await groupSend(message, post.get_sidecar_nodes())
                     await message.answer(f"👆🏻👆🏻👆🏻 \n {post.caption}")
                 elif post.is_video:
                     try:
-                        await message.answer_video(video=post.video_url, caption=f"{post.date}")
+                        await message.answer_video(video=post.video_url, caption=f"{@}")
                     except:
                         print(f"This error occured:")
                         await message.answer(f"{post.date}", reply_markup=failedURL(post.video_url))
@@ -43,5 +42,4 @@ async def dailyUpdates(message, L) -> None:
                 if post.is_pinned:
                     continue
                 else:
-                    await message.answer(f"{username}'dan postlar topilmadi")
                     break
