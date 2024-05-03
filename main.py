@@ -224,7 +224,7 @@ async def download(message: Message) -> None:
         # Determine media URL based on post type (image or video)
         if post.is_video:
             media_url = post.video_url
-            await message.answer_video(video=media_url, caption=f"{italic("@InstaLoader_bot | Instagram upon your terms")}", parse_mode=ParseMode.MARKDOWN_V2)
+            await message.answer_video(video=media_url, caption=f"{italic(f'@InstaLoader_bot | Instagram upon your terms')}", parse_mode=ParseMode.MARKDOWN_V2)
         else:
             media_url = post.url
             await message.answer_photo(photo=media_url, caption=f"@InstaLoader_bot | Instagram upon your terms")
