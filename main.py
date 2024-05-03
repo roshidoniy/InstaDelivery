@@ -14,6 +14,7 @@ from aiogram.utils.markdown import hbold
 from aiogram.exceptions import TelegramBadRequest
 # Initial Instaloader Commands
 from instaloader import Instaloader, Profile
+from instaloader.exceptions import QueryReturnedBadRequestException
 
 #Components
 from firebase_helpers import isUserExist, addFollowing, setupAccount, followingList, unFollow, randomAccount
@@ -140,41 +141,45 @@ async def goFollow(message: Message, state: FSMContext) -> None:
 
 @main_router.message(BotState.story)
 async def goStory(message: Message, state: FSMContext) -> None:
+    await state.clear()
     myMessage = await message.reply_sticker(sticker="CAACAgIAAxkBAAEL6bhmG_FMa3paannjWWswUZnt-yX_tAACIwADKA9qFCdRJeeMIKQGNAQ")
+    error_message = "Bu postni telegram'ga yuborib bo'lmadi \n Lekin pastdagi tugmani bosib be'malol ko'rishingiz mumkin"
 
-    random_account = randomAccount()
-    L.login(random_account['username'], random_account['password'])
+    # random_account = randomAccount()
+    # L.login(random_account['username'], random_account['password'])
 
     stories = []
 
     username = message.text
-    profile = Profile.from_username(L.context, username)
-    isThereAny = profile.has_public_story
-    error_message = "Bu postni telegram'ga yuborib bo'lmadi \n Lekin pastdagi tugmani bosib be'malol ko'rishingiz mumkin"
-
-    if isThereAny:
-        loading = await message.answer('Yuklanyapti...')
-        story = L.get_stories(userids=[profile.userid])
-        for item in story:
-            for i in item.get_items():
-                stories.insert(0, i)
-            
-            for index, item in enumerate(stories):  
-                try:
-                    if item.is_video:
-                        await message.answer_video(video=f"{item.video_url}", caption=f"{index+1}-story")
-                    else:
-                        await message.answer_photo(photo=f"{item.url}", caption=f"{index+1}-story")
-                except TelegramBadRequest:
-                    if item.is_video:
-                        await message.answer(error_message, reply_markup=failedURL(item.video_url))
-                    else:
-                        await message.answer(error_message, reply_markup=failedURL(item.url))
+    try:
+        profile = Profile.from_username(L.context, username)
+    except QueryReturnedBadRequestException:
+        await message.answer(f"Kechirasiz Hozirda Story'larni ko'rib bo'lmaydi, keyinchalik urunib kor'ing.")
     else:
-        await message.answer(f"Hozirda bu akkauntda story'lar yo'q: {username}")
-    await myMessage.delete()
-    await loading.delete()
-    await state.clear()
+        isThereAny = profile.has_public_story
+        if isThereAny:
+            loading = await message.answer('Yuklanyapti...')
+            story = L.get_stories(userids=[profile.userid])
+            for item in story:
+                for i in item.get_items():
+                    stories.insert(0, i)
+                
+                for index, item in enumerate(stories):  
+                    try:
+                        if item.is_video:
+                            await message.answer_video(video=f"{item.video_url}", caption=f"{index+1}-story")
+                        else:
+                            await message.answer_photo(photo=f"{item.url}", caption=f"{index+1}-story")
+                    except TelegramBadRequest:
+                        if item.is_video:
+                            await message.answer(error_message, reply_markup=failedURL(item.video_url))
+                        else:
+                            await message.answer(error_message, reply_markup=failedURL(item.url))
+        else:
+            await message.answer(f"Hozirda bu akkauntda story'lar yo'q: {username}")
+    finally:
+        await myMessage.delete()
+        await loading.delete()
 
 @main_router.message(Command("unfollow"))
 async def unfollow(message: Message, state: FSMContext) -> None:
@@ -196,42 +201,9 @@ async def goDelete(message: Message, state: FSMContext) -> None:
 
 @main_router.message(Command(commands=["stories", "Stories", "story", "Story"]))
 async def getStories(message: Message, state: FSMContext) -> None: 
-    await state.set_state(BotState.story)
-    
-    # myMessage = await message.reply_sticker(sticker="CAACAgIAAxkBAAEL6bhmG_FMa3paannjWWswUZnt-yX_tAACIwADKA9qFCdRJeeMIKQGNAQ")
-    
-    # random_account = randomAccount()
-    # L.login(random_account['username'], random_account['password'])
-    
-    # stories = []
-    
-    # username = command.args
-    # profile = Profile.from_username(L.context, username)
-    # isThereAny = profile.has_public_story
-    # error_message = "Bu postni telegram'ga yuborib bo'lmadi \n Lekin pastdagi tugmani bosib be'malol ko'rishingiz mumkin"
+    await message.answer("username kiriting ↙️, @ <- shu belgisiz ")
 
-    # if isThereAny:
-    #     loading = await message.answer('Yuklanyapti...')
-    #     story = L.get_stories(userids=[profile.userid])
-    #     for item in story:
-    #         for i in item.get_items():
-    #             stories.insert(0, i)
-            
-    #         for index, item in enumerate(stories):  
-    #             try:
-    #                 if item.is_video:
-    #                     await message.answer_video(video=f"{item.video_url}", caption=f"{index+1}-story")
-    #                 else:
-    #                     await message.answer_photo(photo=f"{item.url}", caption=f"{index+1}-story")
-    #             except TelegramBadRequest:
-    #                 if item.is_video:
-    #                     await message.answer(error_message, reply_markup=failedURL(item.video_url))
-    #                 else:
-    #                     await message.answer(error_message, reply_markup=failedURL(item.url))
-    # else:
-    #     await message.answer(f"Hozirda bu akkauntda story'lar yo'q: {username}")
-    # await myMessage.delete()
-    # await loading.delete()
+    await state.set_state(BotState.story)
 
 
 
