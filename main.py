@@ -10,16 +10,17 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.enums import ParseMode
 from aiogram.filters import CommandStart, Command, CommandObject
 from aiogram.types import Message, ReplyKeyboardRemove
-from aiogram.utils.markdown import hbold
+from aiogram.utils.markdown import hbold, italic, blockquote
 from aiogram.exceptions import TelegramBadRequest
 # Initial Instaloader Commands
-from instaloader import Instaloader, Profile
+from instaloader import Instaloader, Profile, Post
 from instaloader.exceptions import QueryReturnedBadRequestException
 
 #Components
 from firebase_helpers import isUserExist, addFollowing, setupAccount, followingList, unFollow, randomAccount
 from keyboard import (unfollow_buttons, failedURL)
 from functions import groupSend, dailyUpdates
+from datetime import datetime
 
 L = Instaloader()
 
@@ -43,15 +44,14 @@ scheduler = AsyncIOScheduler()
 async def command_start_handler(message: types.Message) -> None:
     global scheduler
 
-    
     user = message.from_user
 
     if isUserExist(user.id):
         await message.answer(f"Xush kelibsiz {user.first_name}")
     else:
         setupAccount(user.id, user.full_name)
-        await message.answer(f"Sizning Virtual Instagram akkountingiz yaratildi")
-
+        await message.answer(f"Virtual Instagram akkountingiz yaratildi")
+    await message.answer(f"/follow bosing. \nMen tanlagan akkauntingizdan kunlik yangi postlarni yuborib turaman")
     user_id = message.from_user.id
     
     if not scheduler.get_job(str(user_id)):
@@ -68,6 +68,7 @@ async def now(message: Message) -> None:
     except:
         pass
     scheduler.add_job(dailyUpdates, 'interval', minutes=1, args=[message, L], id=str(user_id))
+    await message.reply(f"🔔 Endi xar kuni shu paytda yangiliklarni yetkazaman")
 
 
 # @main_router.message(Command("setTime"))
@@ -84,6 +85,7 @@ async def now(message: Message) -> None:
 
 @main_router.message(Command("fetch"))
 async def fetch(message: Message, command: CommandObject) -> None: 
+    await message.answer(f"{datetime.now()}")
     username = command.args
     counter = 0
     if username:
@@ -98,11 +100,10 @@ async def fetch(message: Message, command: CommandObject) -> None:
                 await message.answer(f"👆🏻👆🏻👆🏻 \n {post.caption}")
             elif post.is_video:
                 try:
-                    await message.answer_video(video=post.video_url, caption=f"{post.date}")
+                    await message.answer_video(video=post.video_url, caption=f"{post.caption}")
                 except:
                     print(f"This error occured:")
                     await message.answer(f"{post.date}", reply_markup=failedURL(post.video_url))
-                
             else:
                 try:
                     await message.answer_photo(photo=post.url, caption=f"{post.caption}")
@@ -124,7 +125,7 @@ async def follow(message: Message, state: State) -> None:
     if followingLength == 5:
         await message.answer("Hozircha siz 5ta akkountga a'zo bo'la olasiz")
     else:
-        await message.answer("Obuna bo'lmoqchi bo'lgan username kiriting ↙️")
+        await message.answer("Obuna bo'lmoqchi bo'lgan username kiriting ↙️ | \nMisol: sodiq_school") 
         await state.set_state(BotState.followAcc)
     
     
@@ -201,35 +202,35 @@ async def goDelete(message: Message, state: FSMContext) -> None:
 
 @main_router.message(Command(commands=["stories", "Stories", "story", "Story"]))
 async def getStories(message: Message, state: FSMContext) -> None: 
-    await message.answer("username kiriting ↙️, @ <- shu belgisiz ")
+    await message.answer("username kiriting ↙️ | Misol: harrypotter")
 
     await state.set_state(BotState.story)
 
 
 
 @main_router.message()
-# async def download(message: Message) -> None:
-#     await message.answer("Downloading the video")
+async def download(message: Message) -> None:
+    await message.answer("Downloading the video")
 
-#     L = Instaloader()
+    L = Instaloader()
 
-#     url = message.text
+    url = message.text
 
-#     shortcode = url.split('/')[-2]
+    shortcode = url.split('/')[-2]
 
-#     try:
-#         post = Post.from_shortcode(L.context, shortcode)
+    try:
+        post = Post.from_shortcode(L.context, shortcode)
 
-#         # Determine media URL based on post type (image or video)
-#         if post.is_video:
-#             media_url = post.video_url
-#             await message.answer_video(video=media_url, caption=f"{italic("@InstaLoader_bot | Instagram upon your terms")}", parse_mode=ParseMode.MARKDOWN_V2)
-#         else:
-#             media_url = post.url
-#             await message.answer_photo(photo=media_url, caption=f"@InstaLoader_bot | Instagram upon your terms")
+        # Determine media URL based on post type (image or video)
+        if post.is_video:
+            media_url = post.video_url
+            await message.answer_video(video=media_url, caption=f"{italic("@InstaLoader_bot | Instagram upon your terms")}", parse_mode=ParseMode.MARKDOWN_V2)
+        else:
+            media_url = post.url
+            await message.answer_photo(photo=media_url, caption=f"@InstaLoader_bot | Instagram upon your terms")
 
-#     except Exception as e:
-#         print(f"Error downloading post: {e}")
+    except Exception as e:
+        print(f"Error downloading post: {e}")
 
 
 async def main() -> None:

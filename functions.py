@@ -1,7 +1,8 @@
-from aiogram.utils.media_group import MediaGroupBuilder
-from aiogram.exceptions import TelegramAPIError, TelegramBadRequest
 from datetime import datetime, timedelta
 from firebase_helpers import followingList
+from aiogram.utils.markdown import blockquote
+from aiogram.enums import ParseMode
+
 from keyboard import failedURL
 from instaloader import Profile
 async def groupSend(message, postSidecar):
@@ -23,21 +24,22 @@ async def dailyUpdates(message, L) -> None:
         posts = profile.get_posts()
         for post in posts:
             if post.date_utc > currentTime:
+                caption = f"{blockquote(f'{post.owner_username}')} \n {post.caption}"
                 if post.typename == "GraphSidecar":
                     await groupSend(message, post.get_sidecar_nodes())
-                    await message.answer(f"👆🏻👆🏻👆🏻 \n {post.caption}")
+                    await message.answer(f"👆🏻👆🏻👆🏻 {caption}")
                 elif post.is_video:
                     try:
-                        await message.answer_video(video=post.video_url, caption=f"{post.date_utc}")
+                        await message.answer_video(video=post.video_url, caption=caption, parse_mode=ParseMode.MARKDOWN_V2)
                     except:
                         print(f"This error occured:")
-                        await message.answer(f"{post.date}", reply_markup=failedURL(post.video_url))
+                        await message.answer(caption, reply_markup=failedURL(post.video_url))
                 else:
                     try:
-                        await message.answer_photo(photo=post.url, caption=f"{post.caption}")
+                        await message.answer_photo(photo=post.url, caption=caption, parse_mode=ParseMode.MARKDOWN_V2)
                     except:
                         print(f"This error occured:")
-                        await message.answer(f"{post.caption}", reply_markup=failedURL(post.url))
+                        await message.answer(caption, reply_markup=failedURL(post.url))
             else:
                 if post.is_pinned:
                     continue

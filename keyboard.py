@@ -16,6 +16,6 @@ def unfollow_buttons(follows):
 
 def failedURL(link):
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="CLick this", url=link)]
+        [InlineKeyboardButton(text="Postni ko'ring 🎬", url=link)]
     ]
     )
