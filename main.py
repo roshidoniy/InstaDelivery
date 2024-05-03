@@ -184,7 +184,7 @@ async def unfollow(message: Message, state: FSMContext) -> None:
         await message.answer(text="Obunani olmoqchi bo'lgan akkauntni tanlang 👇", reply_markup=unfollow_buttons(currentlyFollowing))
         await state.set_state(BotState.unfollowAcc)
     else:
-        await message.answer(f"Hozirda, Sizda obuna bo'lgan akkauntlar yo'q {hbold("/follow + ACCOUNT_NAME ")}. Shu buyruqni berish orqali obuna bo'ling", parse_mode=ParseMode.HTML)
+        await message.answer(f"Hozirda, Sizda obuna bo'lgan akkauntlar yo'q {hbold(f'/follow + ACCOUNT_NAME')}. Shu buyruqni berish orqali obuna bo'ling", parse_mode=ParseMode.HTML)
      
 
 @main_router.message(BotState.unfollowAcc)

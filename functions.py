@@ -28,7 +28,7 @@ async def dailyUpdates(message, L) -> None:
                     await message.answer(f"👆🏻👆🏻👆🏻 \n {post.caption}")
                 elif post.is_video:
                     try:
-                        await message.answer_video(video=post.video_url, caption=f"{@}")
+                        await message.answer_video(video=post.video_url, caption=f"{post.date_utc}")
                     except:
                         print(f"This error occured:")
                         await message.answer(f"{post.date}", reply_markup=failedURL(post.video_url))
