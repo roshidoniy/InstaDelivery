@@ -55,7 +55,7 @@ async def command_start_handler(message: types.Message) -> None:
     user_id = message.from_user.id
     
     if not scheduler.get_job(str(user_id)):
-        scheduler.add_job(dailyUpdates, 'interval', minutes=1, args=[message, L], id=str(user_id))
+        scheduler.add_job(dailyUpdates, 'interval', hours=24, args=[message, L], id=str(user_id))
 
 
 @main_router.message(Command("now"))
@@ -67,7 +67,7 @@ async def now(message: Message) -> None:
         scheduler.remove_job(str(user_id))
     except:
         pass
-    scheduler.add_job(dailyUpdates, 'interval', minutes=1, args=[message, L], id=str(user_id))
+    scheduler.add_job(dailyUpdates, 'interval', hours=24, args=[message, L], id=str(user_id))
     await message.reply(f"🔔 Endi xar kuni shu paytda yangiliklarni yetkazaman")
 
 
