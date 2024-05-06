@@ -4,25 +4,24 @@ import sys
 import time
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
-from aiogram import Bot, Dispatcher, types, Router
+from aiogram import Bot, Dispatcher, Router
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.enums import ParseMode
-from aiogram.filters import CommandStart, Command, CommandObject
+from aiogram.filters import CommandStart, Command
 from aiogram.types import Message, ReplyKeyboardRemove
-from aiogram.utils.markdown import hbold, italic, blockquote
+from aiogram.utils.markdown import hbold
 from aiogram.exceptions import TelegramBadRequest
 # Initial Instaloader Commands
-from instaloader import Instaloader, Profile, Post
-from instaloader.exceptions import QueryReturnedBadRequestException
+from instaloader import Instaloader
+from instaloader.exceptions import QueryReturnedBadRequestException, ProfileNotExistsException
 
 #Components
-from firebase_helpers import isUserExist, addFollowing, setupAccount, followingList, unFollow, randomAccount
+from firebase_helpers import isUserExist, addFollowing, setupAccount, followingList, unFollow
 from keyboard import (unfollow_buttons, failedURL)
 from functions import groupSend, dailyUpdates
-from datetime import datetime
+from instagram_helpers import randomLogin, storiesFrom, usernameCheck, profileData, L
 
-L = Instaloader()
 
 TOKEN = "6701068330:AAEInwHJitGP-GUcKhKqhueJMtXs8bI7oLE"
 
@@ -34,28 +33,32 @@ class BotState(StatesGroup):
     unfollowAcc = State()
     followAcc = State()
     story = State()
-    # setTime = State()
+    fetch = State()
 
 
 
 scheduler = AsyncIOScheduler()
 
 @main_router.message(CommandStart())
-async def command_start_handler(message: types.Message) -> None:
+async def command_start_handler(message: Message) -> None:
     global scheduler
 
     user = message.from_user
 
     if isUserExist(user.id):
-        await message.answer(f"Xush kelibsiz {user.first_name}")
+        pass
     else:
         setupAccount(user.id, user.full_name)
-        await message.answer(f"Virtual Instagram akkountingiz yaratildi")
-    await message.answer(f"/follow bosing. \nTanlagan akkauntingizdan kunlik yangi postlarni yuborib turaman")
+    await message.answer(f"Xush kelibsiz {user.first_name}")
+    await helpCommand(message)
     user_id = message.from_user.id
     
     if not scheduler.get_job(str(user_id)):
         scheduler.add_job(dailyUpdates, 'interval', hours=24, args=[message, L], id=str(user_id))
+
+@main_router.message(Command("help"))
+async def helpCommand(message: Message) -> None:
+    await message.answer(f"/follow - Shu buyruq orqali instagram akkauntlarga a'zo bo'lishingiz mumkin\n\n/story - Anonym stories ko'rish\n\n")
 
 
 @main_router.message(Command("now"))
@@ -71,50 +74,40 @@ async def now(message: Message) -> None:
     await message.reply(f"🔔 Endi xar kuni shu paytda yangiliklarni yetkazaman")
 
 
-# @main_router.message(Command("setTime"))
-# async def setTime(message: Message, state: FSMContext) -> None:
-#     await message.answer("Set the time to fetch posts")
-#     await state.set_state(BotState.setTime)
-
-
-# @main_router.message(BotState.setTime)
-# async def goSet(message: Message, state: FSMContext) -> None:
-    # setting(message.text, message.from_user.id)
-    # await state.clear()
-
-
 @main_router.message(Command("fetch"))
-async def fetch(message: Message, command: CommandObject) -> None: 
-    username = command.args
+async def fetch(message: Message, state: FSMContext) -> None: 
+    await state.set_state(BotState.fetch)
+    await message.answer(f"username kiriting ↙️")
+
+
+@main_router.message(BotState.fetch)
+async def goFetch(message: Message, state: FSMContext) -> None:
+    await state.clear()
+    username = message.text
     counter = 0
-    if username:
-        await message.answer("Iltimos Kuting, Postlar yuklanyapti...")
-        profile = Profile.from_username(L.context, username)
-        posts = profile.get_posts()
-        # get reels
-        # Thinking about 
-        for post in posts:
-            if post.typename == "GraphSidecar":
-                await groupSend(message, post.get_sidecar_nodes())
-                await message.answer(f"👆🏻👆🏻👆🏻 \n {post.caption}")
-            elif post.is_video:
-                try:
-                    await message.answer_video(video=post.video_url, caption=f"{post.caption}")
-                except:
-                    print(f"This error occured:")
-                    await message.answer(f"{post.caption}", reply_markup=failedURL(post.video_url))
-            else:
-                try:
-                    await message.answer_photo(photo=post.url, caption=f"{post.caption}")
-                except:
-                    print(f"This error occured:")
-                    await message.answer(f"{post.caption}", reply_markup=failedURL(post.url))
-            counter += 1
-            if counter == 3:
-                break
-            time.sleep(2) # Small delay to help with rate limiting
-    else:
-        await message.answer(f"/fetch XXXX || Instagram username'ini XXXX o'rnigaa qo'ying")
+    await message.answer("Iltimos Kuting, Postlar yuklanyapti...")
+    profile = profileData(username)
+    posts = profile.get_posts() 
+    for post in posts:
+        if post.typename == "GraphSidecar":
+            await groupSend(message, post.get_sidecar_nodes())
+            await message.answer(f"👆🏻👆🏻👆🏻 \n {post.caption}")
+        elif post.is_video:
+            try:
+                await message.answer_video(video=post.video_url, caption=f"{post.caption}")
+            except:
+                print(f"This error occured:")
+                await message.answer(f"{post.caption}", reply_markup=failedURL(post.video_url))
+        else:
+            try:
+                await message.answer_photo(photo=post.url, caption=f"{post.caption}")
+            except:
+                print(f"This error occured:")
+                await message.answer(f"{post.caption}", reply_markup=failedURL(post.url))
+        counter += 1
+        if counter == 3:
+            break
+        time.sleep(2) # Small delay to help with rate limiting
 
 
 
@@ -130,40 +123,65 @@ async def follow(message: Message, state: State) -> None:
     
 @main_router.message(BotState.followAcc)
 async def goFollow(message: Message, state: FSMContext) -> None:
-    followTo = message.text
-    userID = message.from_user.id
-        
-    addFollowing(userID, followTo)
-
-    await message.answer(f"Siz obuna bo'ldingiz: `@{followTo}`", parse_mode=ParseMode.MARKDOWN_V2)
-
     await state.clear()
+    followTo = message.text
+    if usernameCheck(followTo):
+        userID = message.from_user.id
+        addFollowing(userID, followTo)
+        await message.answer(f"Siz obuna bo'ldingiz: `@{followTo}`", parse_mode=ParseMode.MARKDOWN_V2)
+    else:
+        await message.answer(f"❌ Bu akkaunt topilmadi: `@{followTo}`", parse_mode=ParseMode.MARKDOWN_V2)
+
+
+@main_router.message(Command("unfollow"))
+async def unfollow(message: Message, state: FSMContext) -> None:
+    currentlyFollowing = followingList(message.from_user.id)
+    
+    if currentlyFollowing:
+        await message.answer(text="Obunani olmoqchi bo'lgan akkauntni tanlang 👇", reply_markup=unfollow_buttons(currentlyFollowing))
+        await state.set_state(BotState.unfollowAcc)
+    else:
+        await message.answer(f"Hozirda, Sizda obuna bo'lgan akkauntlar yo'q {hbold(f'/follow')} Shu buyruqni berish orqali obuna bo'ling", parse_mode=ParseMode.HTML)
+     
+@main_router.message(BotState.unfollowAcc)
+async def goDelete(message: Message, state: FSMContext) -> None:
+    unFollow(message.from_user.id, message.text)
+    await message.answer(text="Obunangizdan olib tashlandi", reply_markup=ReplyKeyboardRemove())
+    await state.clear()
+
+
+@main_router.message(Command(commands=["stories", "Stories", "story", "Story"]))
+async def getStories(message: Message, state: FSMContext) -> None: 
+    await message.answer("username kiriting ↙️ | Misol: harrypotter")
+
+    await state.set_state(BotState.story)
 
 @main_router.message(BotState.story)
 async def goStory(message: Message, state: FSMContext) -> None:
     await state.clear()
     myMessage = await message.reply_sticker(sticker="CAACAgIAAxkBAAEL6bhmG_FMa3paannjWWswUZnt-yX_tAACIwADKA9qFCdRJeeMIKQGNAQ")
     error_message = "Bu postni telegram'ga yuborib bo'lmadi \n Lekin pastdagi tugmani bosib be'malol ko'rishingiz mumkin"
-
-    random_account = randomAccount()
-    L.login(random_account['username'], random_account['password'])
-
-    stories = []
-
     username = message.text
+    stories = []
+    randomLogin()
+
     try:
-        profile = Profile.from_username(L.context, username)
+        profile = profileData(username)
     except QueryReturnedBadRequestException:
         await message.answer(f"Kechirasiz Hozirda Story'larni ko'rib bo'lmaydi, keyinchalik urunib kor'ing.")
+    except ProfileNotExistsException as e:
+        print(e)
+        await message.answer(f"❌ Bu akkaunt topilmadi: `@{username}`", parse_mode=ParseMode.MARKDOWN_V2)
     else:
-        isThereAny = profile.has_public_story
-        if isThereAny:
-            loading = await message.answer('Yuklanyapti...')
-            story = L.get_stories(userids=[profile.userid])
+        loading = await message.answer('Yuklanyapti...')
+        if profile.has_public_story:
+            await message.answer('Story bor...')
+            story = storiesFrom(profile.userid)
+
             for item in story:
                 for i in item.get_items():
                     stories.insert(0, i)
-                
+            
                 for index, item in enumerate(stories):  
                     try:
                         if item.is_video:
@@ -179,80 +197,28 @@ async def goStory(message: Message, state: FSMContext) -> None:
             await message.answer(f"Hozirda bu akkauntda story'lar yo'q: {username}")
     finally:
         await myMessage.delete()
-        await loading.delete()
-
-@main_router.message(Command("unfollow"))
-async def unfollow(message: Message, state: FSMContext) -> None:
-    currentlyFollowing = followingList(message.from_user.id)
-    
-    if currentlyFollowing:
-        await message.answer(text="Obunani olmoqchi bo'lgan akkauntni tanlang 👇", reply_markup=unfollow_buttons(currentlyFollowing))
-        await state.set_state(BotState.unfollowAcc)
-    else:
-        await message.answer(f"Hozirda, Sizda obuna bo'lgan akkauntlar yo'q {hbold(f'/follow + ACCOUNT_NAME')}. Shu buyruqni berish orqali obuna bo'ling", parse_mode=ParseMode.HTML)
-     
-
-@main_router.message(BotState.unfollowAcc)
-async def goDelete(message: Message, state: FSMContext) -> None:
-    unFollow(message.from_user.id, message.text)
-    await message.answer(text="Obunangizdan olib tashlandi", reply_markup=ReplyKeyboardRemove())
-    await state.clear()
+        try:
+            await loading.delete()
+        except:
+            pass
 
 
-@main_router.message(Command(commands=["stories", "Stories", "story", "Story"]))
-async def getStories(message: Message, state: FSMContext) -> None: 
-    await message.answer("username kiriting ↙️ | Misol: harrypotter")
-
-    await state.set_state(BotState.story)
-
-
-
-@main_router.message()
-async def download(message: Message) -> None:
-    await message.answer("Downloading the video")
-
-    L = Instaloader()
-
-    url = message.text
-
-    shortcode = url.split('/')[-2]
-
-    try:
-        post = Post.from_shortcode(L.context, shortcode)
-
-        # Determine media URL based on post type (image or video)
-        if post.is_video:
-            media_url = post.video_url
-            await message.answer_video(video=media_url, caption=f"{italic(f'@InstaLoader_bot | Instagram upon your terms')}", parse_mode=ParseMode.MARKDOWN_V2)
-        else:
-            media_url = post.url
-            await message.answer_photo(photo=media_url, caption=f"@InstaLoader_bot | Instagram upon your terms")
-
-    except Exception as e:
-        print(f"Error downloading post: {e}")
-
+# @main_router.message()
+# # help command
 
 async def main() -> None:
-    
     # Initialize Bot instance with a default parse mode which will be passed to all API calls
     bot = Bot(TOKEN)
-    
     dp = Dispatcher()
     scheduler.start()
     dp.include_router(main_router)
-    # And the run events dispatching
-    await dp.start_polling(bot)
 
+    await dp.start_polling(bot)
 
     while True:
         await asyncio.sleep(1000)
-
-    # This is how you can send ads to users 👇🏻
-    # await bot.send_message(5076971567, "there is an ad")
-
 
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, stream=sys.stdout)
     asyncio.run(main())
-

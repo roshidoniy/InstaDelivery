@@ -17,6 +17,17 @@ def unFollow(userID, toRemove):
         'follows': firestore.firestore.ArrayRemove([toRemove])
     })
 
+def deleteInstaAccount(username)-> None:
+    query_ref = db.collection("instaAccounts").where("username", "==", username)
+
+    docs = query_ref.stream()
+
+    for doc in docs:
+        doc_ref = db.collection("instaAccounts").document(doc.id)
+        doc_ref.delete()
+        print(f'Document with ID {doc.id} deleted successfully.')
+
+
 def addFollowing(userID, followTo):
     doc_ref = col_ref.document(f"{userID}")
     followsArray = list(doc_ref.get().to_dict()['follows'])

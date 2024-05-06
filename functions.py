@@ -2,9 +2,11 @@ from datetime import datetime, timedelta
 from firebase_helpers import followingList
 from aiogram.utils.markdown import blockquote
 from aiogram.enums import ParseMode
+from instaloader import Profile, Instaloader
 
 from keyboard import failedURL
 from instaloader import Profile
+L = Instaloader()
 async def groupSend(message, postSidecar):
     count = 1
     for slide in postSidecar:
@@ -45,3 +47,4 @@ async def dailyUpdates(message, L) -> None:
                     continue
                 else:
                     break
+

@@ -4,9 +4,9 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-aiogram = "*"
-instaloader = "*"
-firebase-admin = "*"
-apscheduler = "*"
+instaloader = "==4.11"
+apscheduler = "==3.10.4"
+aiogram = "==3.5.0"
+firebase-admin = "==6.5.0"
 
 [dev-packages]

@@ -21,26 +21,31 @@ def unfollowInline(follows):
 
 ------- Downlaod Posts --------
 
-# @main_router.message()
-# async def download(message: Message) -> None:
-#     await message.answer("Downloading the video")
+@main_router.message()
+async def download(message: Message) -> None:
+    downloading = await message.answer("Downloading the video")
 
-#     L = Instaloader()
+    L = Instaloader()
 
-#     url = message.text
+    url = message.text
 
-#     shortcode = url.split('/')[-2]
+    shortcode = url.split('/')[-2]
 
-#     try:
-#         post = Post.from_shortcode(L.context, shortcode)
+    try:
+        random_account = randomAccount()
+        L.login(random_account['username'], random_account['password'])
+        post = Post.from_shortcode(L.context, shortcode)
 
-#         # Determine media URL based on post type (image or video)
-#         if post.is_video:
-#             media_url = post.video_url
-#             await message.answer_video(video=media_url, caption=f"{italic("@InstaLoader_bot | Instagram upon your terms")}", parse_mode=ParseMode.MARKDOWN_V2)
-#         else:
-#             media_url = post.url
-#             await message.answer_photo(photo=media_url, caption=f"@InstaLoader_bot | Instagram upon your terms")
+        # Determine media URL based on post type (image or video)
+        if post.is_video:
+            media_url = post.video_url
+            await message.answer_video(video=media_url, caption=f"{italic(f'@InstaLoader_bot | Instagram upon your terms')}", parse_mode=ParseMode.MARKDOWN_V2)
+        else:
+            media_url = post.url
+            await message.answer_photo(photo=media_url, caption=f"@InstaLoader_bot | Instagram upon your terms")
 
-#     except Exception as e:
-#         print(f"Error downloading post: {e}")
+    except Exception as e:
+        # handle the username and delete from instaAccounts
+        print(f"Error downloading post: {e}")
+        await message.answer("Videoni yuklab bo'lmadi ❌")
+    await downloading.delete()
