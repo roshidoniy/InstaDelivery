@@ -152,55 +152,57 @@ async def goDelete(message: Message, state: FSMContext) -> None:
 
 @main_router.message(Command(commands=["stories", "Stories", "story", "Story"]))
 async def getStories(message: Message, state: FSMContext) -> None: 
-    await message.answer("username kiriting ↙️ | Misol: harrypotter")
+    await message.answer("Tez kunda bu funksiyadan foydalana olasiz")
 
-    await state.set_state(BotState.story)
+    # await message.answer("username kiriting ↙️ | Misol: harrypotter")
 
-@main_router.message(BotState.story)
-async def goStory(message: Message, state: FSMContext) -> None:
-    await state.clear()
-    myMessage = await message.reply_sticker(sticker="CAACAgIAAxkBAAEL6bhmG_FMa3paannjWWswUZnt-yX_tAACIwADKA9qFCdRJeeMIKQGNAQ")
-    error_message = "Bu postni telegram'ga yuborib bo'lmadi \n Lekin pastdagi tugmani bosib be'malol ko'rishingiz mumkin"
-    username = message.text
-    stories = []
-    randomLogin()
+    # await state.set_state(BotState.story)
 
-    try:
-        profile = profileData(username)
-    except QueryReturnedBadRequestException:
-        await message.answer(f"Kechirasiz Hozirda Story'larni ko'rib bo'lmaydi, keyinchalik urunib kor'ing.")
-    except ProfileNotExistsException as e:
-        print(e)
-        await message.answer(f"❌ Bu akkaunt topilmadi: `@{username}`", parse_mode=ParseMode.MARKDOWN_V2)
-    else:
-        loading = await message.answer('Yuklanyapti...')
-        if profile.has_public_story:
-            await message.answer('Story bor...')
-            story = storiesFrom(profile.userid)
+# @main_router.message(BotState.story)
+# async def goStory(message: Message, state: FSMContext) -> None:
+#     await state.clear()
+#     myMessage = await message.reply_sticker(sticker="CAACAgIAAxkBAAEL6bhmG_FMa3paannjWWswUZnt-yX_tAACIwADKA9qFCdRJeeMIKQGNAQ")
+#     error_message = "Bu postni telegram'ga yuborib bo'lmadi \n Lekin pastdagi tugmani bosib be'malol ko'rishingiz mumkin"
+#     username = message.text
+#     stories = []
+#     randomLogin()
 
-            for item in story:
-                for i in item.get_items():
-                    stories.insert(0, i)
+#     try:
+#         profile = profileData(username)
+#     except QueryReturnedBadRequestException:
+#         await message.answer(f"Kechirasiz Hozirda Story'larni ko'rib bo'lmaydi, keyinchalik urunib kor'ing.")
+#     except ProfileNotExistsException as e:
+#         print(e)
+#         await message.answer(f"❌ Bu akkaunt topilmadi: `@{username}`", parse_mode=ParseMode.MARKDOWN_V2)
+#     else:
+#         loading = await message.answer('Yuklanyapti...')
+#         if profile.has_public_story:
+#             await message.answer('Story bor...')
+#             story = storiesFrom(profile.userid)
+
+#             for item in story:
+#                 for i in item.get_items():
+#                     stories.insert(0, i)
             
-                for index, item in enumerate(stories):  
-                    try:
-                        if item.is_video:
-                            await message.answer_video(video=f"{item.video_url}", caption=f"{index+1}-story")
-                        else:
-                            await message.answer_photo(photo=f"{item.url}", caption=f"{index+1}-story")
-                    except TelegramBadRequest:
-                        if item.is_video:
-                            await message.answer(error_message, reply_markup=failedURL(item.video_url))
-                        else:
-                            await message.answer(error_message, reply_markup=failedURL(item.url))
-        else:
-            await message.answer(f"Hozirda bu akkauntda story'lar yo'q: {username}")
-    finally:
-        await myMessage.delete()
-        try:
-            await loading.delete()
-        except:
-            pass
+#                 for index, item in enumerate(stories):  
+#                     try:
+#                         if item.is_video:
+#                             await message.answer_video(video=f"{item.video_url}", caption=f"{index+1}-story")
+#                         else:
+#                             await message.answer_photo(photo=f"{item.url}", caption=f"{index+1}-story")
+#                     except TelegramBadRequest:
+#                         if item.is_video:
+#                             await message.answer(error_message, reply_markup=failedURL(item.video_url))
+#                         else:
+#                             await message.answer(error_message, reply_markup=failedURL(item.url))
+#         else:
+#             await message.answer(f"Hozirda bu akkauntda story'lar yo'q: {username}")
+#     finally:
+#         await myMessage.delete()
+#         try:
+#             await loading.delete()
+#         except:
+#             pass
 
 
 # @main_router.message()

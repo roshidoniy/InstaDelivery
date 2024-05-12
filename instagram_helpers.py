@@ -19,4 +19,7 @@ def usernameCheck(username):
         return True
     
 def profileData(username):
-    return Profile.from_username(L.context, username)
+    LA = Instaloader()
+    profile = Profile.from_username(L.context, username)
+    LA.close()
+    return profile

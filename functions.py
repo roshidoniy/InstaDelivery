@@ -12,10 +12,8 @@ async def groupSend(message, postSidecar):
     for slide in postSidecar:
         if slide.is_video:
             await message.answer_video(slide.video_url, caption=f"{count}")
-            print("Video", slide.video_url)
         else:
             await message.answer_photo(slide.display_url, caption=f"{count}")
-            print("Photo", slide.display_url)
         count += 1
 
 async def dailyUpdates(message, L) -> None:
@@ -47,4 +45,4 @@ async def dailyUpdates(message, L) -> None:
                     continue
                 else:
                     break
-
+        await message.answer(f"`@{username}`dan boshqa yangi postlar yo'q", parse_mode=ParseMode.MARKDOWN_V2)

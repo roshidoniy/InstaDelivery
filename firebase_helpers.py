@@ -37,8 +37,6 @@ def addFollowing(userID, followTo):
     'follows': [followTo] + followsArray
     })
 
-
-
 def isUserExist(telegramID) -> bool:
     doc_ref = col_ref.document(f"{telegramID}")
 
