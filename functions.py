@@ -54,5 +54,5 @@ async def dailyUpdates(message, L) -> None:
             await message.answer(f"`@{username}`dan boshqa yangi postlar yo'q", parse_mode=ParseMode.MARKDOWN_V2)
         except LoginRequiredException:
             print("Login Required Exception occured")
-            dailyUpdates(message, L)
+            await dailyUpdates(message, L)
             randomLogin()
