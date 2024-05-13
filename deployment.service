@@ -10,7 +10,7 @@ Type=simple
 User=root
 Group=root
 WorkingDirectory=/home/samadbek_mahmudjonov/InstaDelivery
-ExecStart=/home/samadbek_mahmudjonov/InstaDelivery/instadelivery/bin/python /home/samadbek_mahmudjonov/InstaDelivery/main.py
+ExecStart=/home/samadbek_mahmudjonov/InstaDelivery/.venv/bin/python /home/samadbek_mahmudjonov/InstaDelivery/main.py
 
 [Install]
 WantedBy=multi-user.target
