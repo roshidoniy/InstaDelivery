@@ -1,4 +1,5 @@
-from instaloader import Instaloader, Profile
+import time
+from instaloader import Instaloader, Profile, RateController
 from firebase_helpers import randomAccount
 
 L = Instaloader()
@@ -7,8 +8,8 @@ def randomLogin():
     random_account = randomAccount()
     L.login(random_account['username'], random_account['password'])
 
-def storiesFrom(profileID):
-    return L.get_stories(userids=[int(profileID)])
+# def storiesFrom(profileID):
+#     return L.get_stories(userids=[int(profileID)])
 
 def usernameCheck(username):
     try:
@@ -19,5 +20,9 @@ def usernameCheck(username):
         return True
     
 def profileData(username):
+    if(L.context.is_logged_in):
+        pass
+    else:
+        randomAccount()
     profile = Profile.from_username(L.context, username)
     return profile

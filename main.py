@@ -13,14 +13,12 @@ from aiogram.types import Message, ReplyKeyboardRemove
 from aiogram.utils.markdown import hbold
 from aiogram.exceptions import TelegramBadRequest
 # Initial Instaloader Commands
-from instaloader import Instaloader
-from instaloader.exceptions import QueryReturnedBadRequestException, ProfileNotExistsException
 
 #Components
 from firebase_helpers import isUserExist, addFollowing, setupAccount, followingList, unFollow
 from keyboard import (unfollow_buttons, failedURL)
 from functions import groupSend, dailyUpdates
-from instagram_helpers import randomLogin, storiesFrom, usernameCheck, profileData, L
+from instagram_helpers import usernameCheck, L
 
 
 TOKEN = "6701068330:AAEInwHJitGP-GUcKhKqhueJMtXs8bI7oLE"
@@ -54,7 +52,7 @@ async def command_start_handler(message: Message) -> None:
     user_id = message.from_user.id
     
     if not scheduler.get_job(str(user_id)):
-        scheduler.add_job(dailyUpdates, 'interval', hours=24, args=[message, L], id=str(user_id))
+        scheduler.add_job(dailyUpdates, 'interval', minutes=1, args=[message, L], id=str(user_id))
 
 @main_router.message(Command("help"))
 async def helpCommand(message: Message) -> None:
@@ -70,44 +68,45 @@ async def now(message: Message) -> None:
         scheduler.remove_job(str(user_id))
     except:
         pass
-    scheduler.add_job(dailyUpdates, 'interval', hours=24, args=[message, L], id=str(user_id))
+    scheduler.add_job(dailyUpdates, 'interval', minutes=1, args=[message, L], id=str(user_id))
     await message.reply(f"🔔 Endi xar kuni shu paytda yangiliklarni yetkazaman")
 
 
 @main_router.message(Command("fetch"))
-async def fetch(message: Message, state: FSMContext) -> None: 
-    await state.set_state(BotState.fetch)
-    await message.answer(f"username kiriting ↙️")
+async def fetch(message: Message, state: FSMContext) -> None:
+    await message.answer("Tez kunda bu funksiyadan foydalana olasiz") 
+    # await state.set_state(BotState.fetch)
+    # await message.answer(f"username kiriting ↙️")
 
 
-@main_router.message(BotState.fetch)
-async def goFetch(message: Message, state: FSMContext) -> None:
-    await state.clear()
-    username = message.text
-    counter = 0
-    await message.answer("Iltimos Kuting, Postlar yuklanyapti...")
-    profile = profileData(username)
-    posts = profile.get_posts() 
-    for post in posts:
-        if post.typename == "GraphSidecar":
-            await groupSend(message, post.get_sidecar_nodes())
-            await message.answer(f"👆🏻👆🏻👆🏻 \n {post.caption}")
-        elif post.is_video:
-            try:
-                await message.answer_video(video=post.video_url, caption=f"{post.caption}")
-            except:
-                print(f"This error occured:")
-                await message.answer(f"{post.caption}", reply_markup=failedURL(post.video_url))
-        else:
-            try:
-                await message.answer_photo(photo=post.url, caption=f"{post.caption}")
-            except:
-                print(f"This error occured:")
-                await message.answer(f"{post.caption}", reply_markup=failedURL(post.url))
-        counter += 1
-        if counter == 3:
-            break
-        time.sleep(2) # Small delay to help with rate limiting
+# @main_router.message(BotState.fetch)
+# async def goFetch(message: Message, state: FSMContext) -> None:
+#     await state.clear()
+#     username = message.text
+#     counter = 0
+#     await message.answer("Iltimos Kuting, Postlar yuklanyapti...")
+#     profile = profileData(username)
+#     posts = profile.get_posts() 
+#     for post in posts:
+#         if post.typename == "GraphSidecar":
+#             await groupSend(message, post.get_sidecar_nodes())
+#             await message.answer(f"👆🏻👆🏻👆🏻 \n {post.caption}")
+#         elif post.is_video:
+#             try:
+#                 await message.answer_video(video=post.video_url, caption=f"{post.caption}")
+#             except:
+#                 print(f"This error occured:")
+#                 await message.answer(f"{post.caption}", reply_markup=failedURL(post.video_url))
+#         else:
+#             try:
+#                 await message.answer_photo(photo=post.url, caption=f"{post.caption}")
+#             except:
+#                 print(f"This error occured:")
+#                 await message.answer(f"{post.caption}", reply_markup=failedURL(post.url))
+#         counter += 1
+#         if counter == 3:
+#             break
+#         time.sleep(2) # Small delay to help with rate limiting
 
 
 
