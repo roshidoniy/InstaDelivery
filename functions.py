@@ -3,14 +3,15 @@ from datetime import datetime, timedelta
 from firebase_helpers import followingList
 from aiogram.utils.markdown import blockquote
 from aiogram.enums import ParseMode
-from instaloader import Profile, Instaloader, RateController
-from instaloader.exceptions import LoginRequiredException, ConnectionException
+from instaloader import Profile, Instaloader
+from instaloader.exceptions import LoginRequiredException, ConnectionException, ProfileNotExistsException
 
 
 from keyboard import failedURL
 from instaloader import Profile
 from instagram_helpers import randomLogin
-L = Instaloader()
+from firebase_helpers import deleteInstaAccount
+L = Instaloader(max_connection_attempts=1)
 async def groupSend(message, postSidecar):
     count = 1
     for slide in postSidecar:
@@ -52,11 +53,14 @@ async def dailyUpdates(message, L) -> None:
                         break
                 time.sleep(3)
             await message.answer(f"`@{username}`dan boshqa yangi postlar yo'q", parse_mode=ParseMode.MARKDOWN_V2)
-        except LoginRequiredException:
-            print("Login Required Exception occured: Account was logged out")
-            await dailyUpdates(message, L)
-            randomLogin()
-        except ConnectionException:
-            print("ConnectionException occured: Checkpoint required")
-            await dailyUpdates(message, L)
-            randomLogin()
+        # except LoginRequiredException:
+        #     print("Login Required Exception occured: Account was logged out")
+        #     await dailyUpdates(message, L)
+        #     randomLogin()
+        # except ConnectionException:
+        #     print("ConnectionException occured: Checkpoint required")
+        #     await dailyUpdates(message, L)
+        #     randomLogin()
+        except ProfileNotExistsException:
+            print("Oh Boi")
+            

@@ -18,7 +18,7 @@ from aiogram.exceptions import TelegramBadRequest
 from firebase_helpers import isUserExist, addFollowing, setupAccount, followingList, unFollow
 from keyboard import (unfollow_buttons, failedURL)
 from functions import groupSend, dailyUpdates
-from instagram_helpers import usernameCheck, L
+from instagram_helpers import L, usernameCheck
 
 
 TOKEN = "6701068330:AAEInwHJitGP-GUcKhKqhueJMtXs8bI7oLE"
@@ -30,8 +30,6 @@ main_router = Router()
 class BotState(StatesGroup):
     unfollowAcc = State()
     followAcc = State()
-    story = State()
-    fetch = State()
 
 
 
@@ -129,7 +127,7 @@ async def goFollow(message: Message, state: FSMContext) -> None:
         addFollowing(userID, followTo)
         await message.answer(f"Siz obuna bo'ldingiz: `@{followTo}`", parse_mode=ParseMode.MARKDOWN_V2)
     else:
-        await message.answer(f"❌ Bu akkaunt topilmadi: `@{followTo}`", parse_mode=ParseMode.MARKDOWN_V2)
+        await message.answer("Qayta urinib ko'ring")
 
 
 @main_router.message(Command("unfollow"))
