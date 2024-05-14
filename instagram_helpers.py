@@ -1,7 +1,7 @@
 import time
 from instaloader import Instaloader, Profile, RateController
 from firebase_helpers import randomAccount
-import requests
+from instaloader.exceptions import ProfileNotExistsException
 L = Instaloader()
 
 def randomLogin():
@@ -13,9 +13,8 @@ def randomLogin():
 #     return L.get_stories(userids=[int(profileID)])
     
 def usernameCheck(username):
-    LA = Instaloader(max_connection_attempts=1)
     try:
-        Profile.from_username(LA.context, username)
+        Profile.from_username(L.context, username)
     except:
         return False
     else:
