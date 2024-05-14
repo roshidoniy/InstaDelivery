@@ -59,6 +59,7 @@ async def dailyUpdates(message, L) -> None:
             randomLogin()
         except ConnectionException:
             print("ConnectionException occured: Checkpoint required")
+            L.close()
             await dailyUpdates(message, L)
             randomLogin()
             

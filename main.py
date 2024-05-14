@@ -122,12 +122,9 @@ async def follow(message: Message, state: State) -> None:
 async def goFollow(message: Message, state: FSMContext) -> None:
     await state.clear()
     followTo = message.text
-    if usernameCheck(followTo):
-        userID = message.from_user.id
-        addFollowing(userID, followTo)
-        await message.answer(f"Siz obuna bo'ldingiz: `@{followTo}`", parse_mode=ParseMode.MARKDOWN_V2)
-    else:
-        await message.answer(f"@`{followTo}` - bu akkaunt topilmadi. Qayta urinib ko'ring")
+    userID = message.from_user.id
+    addFollowing(userID, followTo)
+    await message.answer(f"Siz obuna bo'ldingiz: `@{followTo}`", parse_mode=ParseMode.MARKDOWN_V2)
 
 
 @main_router.message(Command("unfollow"))

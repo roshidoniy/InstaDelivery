@@ -5,6 +5,7 @@ from instaloader.exceptions import ProfileNotExistsException
 L = Instaloader()
 
 def randomLogin():
+    L.close()
     random_account = randomAccount()
     L.login(random_account['username'], random_account['password'])
     print(random_account)
