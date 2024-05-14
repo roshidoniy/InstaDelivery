@@ -18,8 +18,9 @@ from aiogram.exceptions import TelegramBadRequest
 from firebase_helpers import isUserExist, addFollowing, setupAccount, followingList, unFollow
 from keyboard import (unfollow_buttons, failedURL)
 from functions import groupSend, dailyUpdates
-from instagram_helpers import L, usernameCheck
+from instagram_helpers import L, usernameCheck, randomLogin
 
+randomLogin()
 
 TOKEN = "6701068330:AAEInwHJitGP-GUcKhKqhueJMtXs8bI7oLE"
 
