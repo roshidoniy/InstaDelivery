@@ -53,14 +53,12 @@ async def dailyUpdates(message, L) -> None:
                         break
                 time.sleep(3)
             await message.answer(f"`@{username}`dan boshqa yangi postlar yo'q", parse_mode=ParseMode.MARKDOWN_V2)
-        # except LoginRequiredException:
-        #     print("Login Required Exception occured: Account was logged out")
-        #     await dailyUpdates(message, L)
-        #     randomLogin()
-        # except ConnectionException:
-        #     print("ConnectionException occured: Checkpoint required")
-        #     await dailyUpdates(message, L)
-        #     randomLogin()
-        except ProfileNotExistsException:
-            print("Oh Boi")
+        except LoginRequiredException:
+            print("Login Required Exception occured: Account was logged out")
+            await dailyUpdates(message, L)
+            randomLogin()
+        except ConnectionException:
+            print("ConnectionException occured: Checkpoint required")
+            await dailyUpdates(message, L)
+            randomLogin()
             
