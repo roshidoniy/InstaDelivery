@@ -1,11 +1,11 @@
-import time
 from instaloader import Instaloader, Profile, RateController
 from firebase_helpers import randomAccount
 from instaloader.exceptions import ProfileNotExistsException
 L = Instaloader()
 
 def randomLogin():
-    L.close()
+    global L
+    L = Instaloader()
     random_account = randomAccount()
     L.login(random_account['username'], random_account['password'])
     print(random_account)
