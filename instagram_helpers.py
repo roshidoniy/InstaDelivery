@@ -5,8 +5,17 @@ L = Instaloader()
 
 def randomLogin():
     global L
+    
+    # Close the existing session L
+    L.close()
+    
+    # Create a new Instaloader instance
     L = Instaloader()
+    
+    # Get random account credentials
     random_account = randomAccount()
+    
+    # Login using the random account credentials
     L.login(random_account['username'], random_account['password'])
     print(random_account)
 
