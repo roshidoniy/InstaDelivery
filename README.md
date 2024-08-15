@@ -1,6 +1,6 @@
 # InstaDelivery - Telegram Bot
 
-![InstaDelivery]("https://github.com/roshidoniy/InstaDelivery/blob/main/images/InstaDelivery.jpg")
+![InstaDelivery](https://github.com/roshidoniy/InstaDelivery/blob/main/images/InstaDelivery.jpg)
 
 @InstaDelivery_bot is a Telegram bot that helps users who prefer not to use the Instagram app to get daily posts from their favorite creators.
 
