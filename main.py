@@ -23,7 +23,7 @@ from functions import groupSend, dailyUpdates
 from instagram_helpers import randomLogin, allStories, usernameCheck, profileData, L
 
 
-TOKEN = "7014532449:AAGxNnp0kG1wCCrEC5-vP-ZBt0cfz7Jz8uU"
+TOKEN = "..."
 
 # All handlers should be attached to the Router
 main_router = Router()
@@ -226,7 +226,7 @@ async def goStory(message: Message, state: FSMContext) -> None:
     else:
         loading = await message.answer('Downloading...')
 
-        # ✅Checks if there is any Stories found in given profile
+        # ✅ Checks if there is any Stories found in given profile
         if profile.has_public_story:
             await message.answer('Story has been found...')
 
@@ -236,7 +236,6 @@ async def goStory(message: Message, state: FSMContext) -> None:
             for item in story:
                 for i in item.get_items():
                     stories.insert(0, i)
-            
                 for index, item in enumerate(stories):  
                     try:
                         if item.is_video:
@@ -249,11 +248,11 @@ async def goStory(message: Message, state: FSMContext) -> None:
                         else:
                             await message.answer(error_message, reply_markup=failedURL(item.url))
 
-        # ❌Handles the condition where profile owner didn't upload a story yet
+        # ❌ Handles the condition where profile owner didn't upload a story yet
         else:
             await message.answer(f"Three is no story on this account: {username}")
     
-    # Whatever will be, program will delete loading Messages.
+    # No matter what happens, program will delete loading Messages.
     finally:
         await myMessage.delete()
         try:
