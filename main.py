@@ -49,7 +49,7 @@ async def command_start_handler(message: Message) -> None:
         pass
     else:
         setupAccount(user.id, user.full_name)
-    await message.answer(f"Xush kelibsiz {user.first_name}")
+    await message.answer(f"Welcome {user.first_name}")
     await helpCommand(message)
     user_id = message.from_user.id
     
@@ -58,7 +58,7 @@ async def command_start_handler(message: Message) -> None:
 
 @main_router.message(Command("help"))
 async def helpCommand(message: Message) -> None:
-    await message.answer(f"/follow - Shu buyruq orqali instagram akkauntlarga a'zo bo'lishingiz mumkin\n\n/story - Anonym stories ko'rish\n\n")
+    await message.answer(f"/follow - You can subscribe to Instagram Channels with this command\n  \n/story - View Stories Anonymusly")
 
 
 @main_router.message(Command("now"))
@@ -77,12 +77,12 @@ async def now(message: Message) -> None:
     except:
         pass
     scheduler.add_job(dailyUpdates, 'interval', hours=24, args=[message, L], id=str(user_id))
-    await message.reply(f"🔔 Endi xar kuni shu paytda yangiliklarni yetkazaman")
+    await message.reply(f"🔔 From now, I will send you daily posts at this time everyday")
 
 
 @main_router.message(Command("fetch"))
 async def fetch(message: Message, state: FSMContext) -> None: 
-    await message.answer(f"username kiriting ↙️")
+    await message.answer(f"Type username ↙️")
     await state.set_state(BotState.fetch) 
     # Directs to BotState.fetch
 
@@ -99,7 +99,7 @@ async def goFetch(message: Message, state: FSMContext) -> None:
     await state.clear()
     username = message.text
     counter = 0
-    await message.answer("Iltimos Kuting, Postlar yuklanyapti...")
+    await message.answer("⏰ Downloading Posts, Please wait...")
     try:
         profile = profileData(username)
         posts = profile.get_posts()
@@ -148,9 +148,9 @@ async def follow(message: Message, state: State) -> None:
     # Return how many followees do user have in the Firestore 🔥
     followingLength = len(followingList(message.from_user.id))
     if followingLength == 5:
-        await message.answer("Hozircha siz 5ta akkountga a'zo bo'la olasiz")
+        await message.answer("You can only follow 5 people at a time. Please /unfollow some of them first.")
     else:
-        await message.answer("Obuna bo'lmoqchi bo'lgan username kiriting ↙️ | \nMisol: sodiq_school") 
+        await message.answer("Type the username you want to follow ↙️ | \nE.G: sodiq_school") 
         await state.set_state(BotState.followAcc) # -> 👇🏻 Directs to BotState.followAcc 
     
     
@@ -166,9 +166,9 @@ async def goFollow(message: Message, state: FSMContext) -> None:
     if usernameCheck(followTo):
         userID = message.from_user.id
         addFollowing(userID, followTo)
-        await message.answer(f"Siz obuna bo'ldingiz: `@{followTo}`", parse_mode=ParseMode.MARKDOWN_V2)
+        await message.answer(f"You followed: `@{followTo}`", parse_mode=ParseMode.MARKDOWN_V2)
     else:
-        await message.answer(f"❌ Bu akkaunt topilmadi: `@{followTo}`", parse_mode=ParseMode.MARKDOWN_V2)
+        await message.answer(f"❌ This account doesn't exist: `@{followTo}`", parse_mode=ParseMode.MARKDOWN_V2)
 
 
 @main_router.message(Command("unfollow"))
@@ -179,23 +179,23 @@ async def unfollow(message: Message, state: FSMContext) -> None:
     
     # checks if user follows array isn't empty
     if currentlyFollowing:
-        await message.answer(text="Obunani olmoqchi bo'lgan akkauntni tanlang 👇", reply_markup=unfollow_buttons(currentlyFollowing))
+        await message.answer(text="Choose the account you want to follow 👇", reply_markup=unfollow_buttons(currentlyFollowing))
         await state.set_state(BotState.unfollowAcc) # Directs to BotState.unfollowAcc
     else:
-        await message.answer(f"Hozirda, Sizda obuna bo'lgan akkauntlar yo'q {hbold(f'/follow')} Shu buyruqni berish orqali obuna bo'ling", parse_mode=ParseMode.HTML)
+        await message.answer(f"You don't follow to this account.", parse_mode=ParseMode.HTML)
      
 @main_router.message(BotState.unfollowAcc)
 async def goDelete(message: Message, state: FSMContext) -> None:
 
     #removes an username from a firebase document
     unFollow(message.from_user.id, message.text)
-    await message.answer(text="Obunangizdan olib tashlandi", reply_markup=ReplyKeyboardRemove())
+    await message.answer(text="Unfollowed", reply_markup=ReplyKeyboardRemove())
     await state.clear()
 
 
 @main_router.message(Command(commands=["stories", "Stories", "story", "Story"]))
 async def getStories(message: Message, state: FSMContext) -> None: 
-    await message.answer("username kiriting ↙️ | Misol: harrypotter")
+    await message.answer("type the username ↙️ | E.G: harrypotter")
 
     await state.set_state(BotState.story) # 👇🏻 Directs to BotState.story
 
@@ -203,7 +203,7 @@ async def getStories(message: Message, state: FSMContext) -> None:
 async def goStory(message: Message, state: FSMContext) -> None:
     await state.clear()
     myMessage = await message.reply_sticker(sticker="CAACAgIAAxkBAAEL6bhmG_FMa3paannjWWswUZnt-yX_tAACIwADKA9qFCdRJeeMIKQGNAQ")
-    error_message = "Bu postni telegram'ga yuborib bo'lmadi \n Lekin pastdagi tugmani bosib be'malol ko'rishingiz mumkin"
+    error_message = "This post can not be sent to Telegram. \n But you can still view it in your browser by pressing the button below."
     username = message.text
     stories = []
     # randomLogin() -> previous location
@@ -215,20 +215,20 @@ async def goStory(message: Message, state: FSMContext) -> None:
 
     # When There is a problem in us
     except QueryReturnedBadRequestException:
-        await message.answer(f"Xatolik sizda emas, menda 🤖. Iltimos keyinroq xarakat qilib ko'ring")
+        await message.answer(f"Please try again")
 
     # when user gives a wrong username
     except ProfileNotExistsException as e:
         print(e)
-        await message.answer(f"❌ Bu akkaunt topilmadi: `@{username}`", parse_mode=ParseMode.MARKDOWN_V2)
+        await message.answer(f"❌ This account doesn't exist: `@{username}`", parse_mode=ParseMode.MARKDOWN_V2)
 
     # If there is no problem in fetching profile  data
     else:
-        loading = await message.answer('Yuklanyapti...')
+        loading = await message.answer('Downloading...')
 
         # ✅Checks if there is any Stories found in given profile
         if profile.has_public_story:
-            await message.answer('Story bor...')
+            await message.answer('Story has been found...')
 
             # 👇🏻Returns an list, which contains all Stories of an profile
             story = allStories(profile.userid)
@@ -251,7 +251,7 @@ async def goStory(message: Message, state: FSMContext) -> None:
 
         # ❌Handles the condition where profile owner didn't upload a story yet
         else:
-            await message.answer(f"Hozirda bu akkauntda story'lar yo'q: {username}")
+            await message.answer(f"Three is no story on this account: {username}")
     
     # Whatever will be, program will delete loading Messages.
     finally:
